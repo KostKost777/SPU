@@ -33,5 +33,5 @@ int main()
 
     TranEndProcessing();
 
-    printf("OK\n");
+    printf("Tran OK\n");
 }
