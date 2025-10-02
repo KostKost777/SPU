@@ -43,6 +43,11 @@ int TranWriteCmdInFile(int* code_arr, size_t last_index)
 
     FILE* bin_file = fopen("binfile.txt", "w");
 
+    if (bin_file == NULL) {
+        PRINT_LOGS("The bin file did not open");
+        return 1;
+    }
+
     for (size_t i = 0; i < last_index; ++i) {
 
         if (code_arr[i] == cmdPUSH) {
@@ -81,6 +86,11 @@ int TranReadCmdFromFile(int* code_arr,
     }
 
     FILE* source_file = fopen(source_file_name, "r");
+
+    if (source_file == NULL) {
+        PRINT_LOGS("The source file did not open");
+        return 1;
+    }
 
     const int MAXLINELEN = 10;
     char cmdStr[MAXLINELEN] = "";
