@@ -8,15 +8,19 @@ enum CmdCodes
     cmdADD = 2,
     cmdSUB = 3,
     cmdDIV = 4,
-    cmdOUT = 5
+    cmdOUT = 5,
+    cmdMUL = 6
 };
 
-void PrintTranslatorLogs(const char* message, size_t line);
+int TranPrintLogs(const char* message, size_t line,
+                  const char* source_file_name);
 
-void WriteCmdInFile(int* code_arr, size_t last_index);
+int TranWriteCmdInFile(int* code_arr, size_t last_index);
 
-int SetNewArrSize(int** code_arr, size_t* capacity);
+int TranReadCmdFromFile(int* code_arr, size_t capacity, size_t* last_index);
 
-void EndProcessing(int** arr);
+void TranEndProcessing();
+
+int EmitInArr(int* code_arr, size_t* last_index, int value);
 
 #endif
