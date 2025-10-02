@@ -6,7 +6,6 @@
 #include "translator_functions.h"
 
 const char* log_file_name = "logfile.txt";
-const char* bin_file_name = "binfile.txt";
 
 FILE* log_file = fopen(log_file_name, "w");
 
