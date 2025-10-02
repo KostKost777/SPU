@@ -1,6 +1,7 @@
 #include <TXLIB.h>
 
 #include "translator_functions.h"
+#include "common_functions.h"
 #include "dump_functions.h"
 
 extern FILE* log_file;
@@ -49,20 +50,31 @@ int TranWriteCmdInFile(int* code_arr, size_t last_index)
     }
 
     for (size_t i = 0; i < last_index; ++i) {
-
-        if (code_arr[i] == cmdPUSH) {
-
-            if (i + 1 >= last_index) {
-                PRINT_LOGS("Incorrect syntax of the PUSH operation");
-                return 1;
-            }
-
-            fprintf(bin_file, "%d %d\n", code_arr[i], code_arr[i + 1]);
-            i++;
-        }
-        else
-            fprintf(bin_file, "%d\n", code_arr[i]);
+            fprintf(bin_file, "%d", code_arr[i]);
+            if (i != last_index - 1)
+                fprintf(bin_file, " ");
     }
+
+    fclose(bin_file);
+
+    return 0;
+}
+
+int TranWriteCmdInBinFile(int* code_arr, size_t last_index)
+{
+    if (code_arr == NULL){
+        PRINT_LOGS("Buffer have NULL ptr");
+        return 1;
+    }
+
+    FILE* bin_file = fopen("binfile.bin", "wb");
+
+    if (bin_file == NULL) {
+        PRINT_LOGS("The bin file did not open");
+        return 1;
+    }
+
+    fwrite(code_arr, sizeof(int), last_index, bin_file);
 
     fclose(bin_file);
 
@@ -110,12 +122,22 @@ int TranReadCmdFromFile(int* code_arr,
         if (strcmp(cmdStr, "PUSH") == 0) {
             EmitInArr(code_arr, last_index, cmdPUSH);
 
-            fscanf(source_file, "%d", &arg);
+            int status = fscanf(source_file, "%d", &arg);
+
+            if (status == 0) {
+                TranPrintLogs("Incorrect syntax of the PUSH operation",
+                              line_now, source_file_name);
+                return 1;
+            }
+
             EmitInArr(code_arr, last_index, arg);
         }
 
         else if (strcmp(cmdStr, "ADD") == 0)
             EmitInArr(code_arr, last_index, cmdADD);
+
+        else if (strcmp(cmdStr, "SQVRT") == 0)
+            EmitInArr(code_arr, last_index, cmdSQVRT);
 
         else if (strcmp(cmdStr, "SUB") == 0)
             EmitInArr(code_arr, last_index, cmdSUB);

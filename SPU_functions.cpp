@@ -3,11 +3,36 @@
 #include "dump_functions.h"
 #include "stack_functions.h"
 #include "SPU_functions.h"
-#include "translator_functions.h"
+#include "common_functions.h"
 
 extern const char* log_file_name;
 
 extern FILE* log_file;
+
+int SPUReadCmdFromBinFile(int* code_arr, const size_t CAPACITY,
+                                         size_t* last_index)
+{
+    if (code_arr == NULL){
+        PRINT_LOGS("Buffer have NULL ptr");
+        return 1;
+    }
+
+    if (last_index == NULL){
+        PRINT_LOGS("Last index have NULL ptr");
+        return 1;
+    }
+
+    FILE* bin_file = fopen("binfile.bin", "rb");
+
+    if (bin_file == NULL) {
+        PRINT_LOGS("The bin file did not open");
+        return 1;
+    }
+
+    *last_index = fread(code_arr, sizeof(int), CAPACITY, bin_file);
+
+    return 0;
+}
 
 int SPUReadCmdFromFile(int* code_arr, const size_t CAPACITY, size_t* last_index)
 {
@@ -61,6 +86,9 @@ int SPURunCmdFromBuffer(int* code_arr, int last_index)
             case cmdPUSH: Push(&stk, code_arr[++i]);
                           break;
 
+            case cmdSQVRT: Sqvrt(&stk);
+                         break;
+
             case cmdADD: Add(&stk);
                          break;
 
@@ -96,6 +124,15 @@ void Add(Stack* stk)
     GET_TWO_ELEM(stk);
 
     StackPush(stk, elem1 + elem2);
+}
+
+void Sqvrt(Stack* stk)
+{
+    StackValueType elem = 0;
+
+    StackPop(stk, &elem);
+
+    StackPush(stk,(int)sqrt(elem));
 }
 
 void Sub(Stack* stk)

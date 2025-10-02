@@ -26,6 +26,11 @@ int main()
         return 0;
     }
 
+    if (TranWriteCmdInBinFile(code_arr, last_index) == 1) {
+        TranEndProcessing();
+        return 0;
+    }
+
     TranEndProcessing();
 
     printf("OK\n");
