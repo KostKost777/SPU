@@ -9,40 +9,15 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
-int SPUReadCmdFromBinFile(int* code_arr, const size_t CAPACITY,
-                                         size_t* last_index)
+int SPUReadCmdFromFile(struct Buffer* buffer)
 {
-    if (code_arr == NULL){
+    if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
         return 1;
     }
 
-    if (last_index == NULL){
-        PRINT_LOGS("Last index have NULL ptr");
-        return 1;
-    }
-
-    FILE* bin_file = fopen("binfile.bin", "rb");
-
-    if (bin_file == NULL) {
-        PRINT_LOGS("The bin file did not open");
-        return 1;
-    }
-
-    *last_index = fread(code_arr, sizeof(int), CAPACITY, bin_file);
-
-    return 0;
-}
-
-int SPUReadCmdFromFile(int* code_arr, const size_t CAPACITY, size_t* last_index)
-{
-    if (code_arr == NULL){
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
-
-    if (last_index == NULL){
-        PRINT_LOGS("Last index have NULL ptr");
+    if (buffer->code_arr == NULL){
+        PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
 
@@ -55,22 +30,23 @@ int SPUReadCmdFromFile(int* code_arr, const size_t CAPACITY, size_t* last_index)
 
     while (true) {
 
-        if (*last_index >= CAPACITY){
+        if (buffer->last_index >= CAPACITY){
             PRINT_LOGS("Not enought memory in buffer, please increase capacity");
             return 1;
         }
 
         //printf("%d\n", (*code_arr)[*last_index]);
 
-        if (fscanf(bin_file, "%d", &code_arr[*last_index]) == EOF)
+        if (fscanf(bin_file, "%d",
+                   &(buffer->code_arr[buffer->last_index])) == EOF)
             break;
 
-        (*last_index)++;
+        buffer->last_index++;
     }
     return 0;
 }
 
-int SPURunCmdFromBuffer(int* code_arr, int last_index)
+int SPURunCmdFromBuffer(struct Buffer* buffer)
 {
     INIT_STACK(stk);
 
@@ -78,12 +54,12 @@ int SPURunCmdFromBuffer(int* code_arr, int last_index)
 
     StackCtor(&stk, stk_size);
 
-    for (int i = 0; i < last_index; ++i){
-        switch(code_arr[i])
+    for (size_t i = 0; i < buffer->last_index; ++i){
+        switch(buffer->code_arr[i])
         {
             case cmdHLT: return 0;
 
-            case cmdPUSH: Push(&stk, code_arr[++i]);
+            case cmdPUSH: Push(&stk, buffer->code_arr[++i]);
                           break;
 
             case cmdSQVRT: Sqvrt(&stk);

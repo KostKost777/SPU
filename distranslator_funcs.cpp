@@ -9,32 +9,7 @@ extern FILE* log_file;
 
 extern const char* log_file_name;
 
-int DistranReadCmdFromBinFile(int* code_arr, const size_t CAPACITY,
-                              size_t* last_index)
-{
-    if (code_arr == NULL){
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
-
-    if (last_index == NULL){
-        PRINT_LOGS("Last index have NULL ptr");
-        return 1;
-    }
-
-    FILE* bin_file = fopen("binfile.bin", "rb");
-
-    if (bin_file == NULL) {
-        PRINT_LOGS("The bin file did not open");
-        return 1;
-    }
-
-    *last_index = fread(code_arr, sizeof(int), CAPACITY, bin_file);
-
-    return 0;
-}
-
-int DistranWriteCmdInFile(int* code_arr, int last_index)
+int DistranWriteCmdInFile(struct Buffer* buffer)
 {
     FILE* out_file = fopen("distran_out.txt", "w");
 
@@ -42,14 +17,14 @@ int DistranWriteCmdInFile(int* code_arr, int last_index)
     //                            "SUB", "DIV", "OUT",
     //                            "MUL", "SQVRT"};
 
-    for (int i = 0; i < last_index; ++i){
-        switch(code_arr[i])
+    for (size_t i = 0; i < buffer->last_index; ++i){
+        switch(buffer->code_arr[i])
         {
             case cmdHLT: fprintf(out_file, "HLT\n");
                          break;
 
             case cmdPUSH: fprintf(out_file, "PUSH");
-                          fprintf(out_file, " %d\n", code_arr[++i]);
+                          fprintf(out_file, " %d\n", buffer->code_arr[++i]);
                           break;
 
             case cmdSQVRT: fprintf(out_file, "SQVRT\n");

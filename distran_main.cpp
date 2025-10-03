@@ -11,18 +11,16 @@ FILE* log_file = fopen(log_file_name, "w");
 
 int main()
 {
-    const size_t CAPACITY = 1000;
+    struct Buffer buffer = {};
 
-    int code_arr[CAPACITY] = {};
+    buffer.last_index = 0;
 
-    size_t last_index = 0;
-
-    if (DistranReadCmdFromBinFile(code_arr, CAPACITY, &last_index) == 1) {
+    if (ReadCmdFromBinFile(&buffer) == 1) {
         DistranEndProcessing();
         return 0;
     }
 
-    if (DistranWriteCmdInFile(code_arr, last_index) == 1) {
+    if (DistranWriteCmdInFile(&buffer) == 1) {
         DistranEndProcessing();
         return 0;
     }

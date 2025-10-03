@@ -15,4 +15,14 @@ enum CmdCodes
     cmdSQVRT = 7
 };
 
+const size_t CAPACITY = 500;
+
+struct Buffer
+{
+    int code_arr[CAPACITY];
+    size_t last_index;
+};
+
+int ReadCmdFromBinFile(struct Buffer* buffer);
+
 #endif

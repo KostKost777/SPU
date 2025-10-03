@@ -35,10 +35,16 @@ int TranPrintLogs(const char* message,
     return 0;
 }
 
-int TranWriteCmdInFile(int* code_arr, size_t last_index)
+int TranWriteCmdInFile(struct Buffer* buffer)
 {
-    if (code_arr == NULL){
+
+    if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
+        return 1;
+    }
+
+    if (buffer->code_arr == NULL){
+        PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
 
@@ -49,9 +55,9 @@ int TranWriteCmdInFile(int* code_arr, size_t last_index)
         return 1;
     }
 
-    for (size_t i = 0; i < last_index; ++i) {
-            fprintf(bin_file, "%d", code_arr[i]);
-            if (i != last_index - 1)
+    for (size_t i = 0; i < buffer->last_index; ++i) {
+            fprintf(bin_file, "%d", buffer->code_arr[i]);
+            if (i != buffer->last_index - 1)
                 fprintf(bin_file, " ");
     }
 
@@ -60,10 +66,15 @@ int TranWriteCmdInFile(int* code_arr, size_t last_index)
     return 0;
 }
 
-int TranWriteCmdInBinFile(int* code_arr, size_t last_index)
+int TranWriteCmdInBinFile(struct Buffer* buffer)
 {
-    if (code_arr == NULL){
+    if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
+        return 1;
+    }
+
+    if (buffer->code_arr == NULL){
+        PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
 
@@ -74,7 +85,7 @@ int TranWriteCmdInBinFile(int* code_arr, size_t last_index)
         return 1;
     }
 
-    fwrite(code_arr, sizeof(int), last_index, bin_file);
+    fwrite(buffer->code_arr, sizeof(int), buffer->last_index, bin_file);
 
     fclose(bin_file);
 
@@ -86,14 +97,17 @@ void TranEndProcessing()
     fclose(log_file);
 }
 
-int TranReadCmdFromFile(int* code_arr,
-                        const size_t CAPASITY,
-                        size_t* last_index)
+int TranReadCmdFromFile(struct Buffer* buffer)
 {
     const char* source_file_name = "source.asm";
 
-    if (code_arr == NULL){
+    if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
+        return 1;
+    }
+
+    if (buffer->code_arr == NULL){
+        PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
 
@@ -114,13 +128,13 @@ int TranReadCmdFromFile(int* code_arr,
         if (fscanf(source_file, "%s", cmdStr) == EOF)
             break;
 
-        if (*last_index >= CAPASITY){
+        if (buffer->last_index >= CAPACITY){
             PRINT_LOGS("Not enought memory in buffer, please increase capacity");
             return 1;
         }
 
         if (strcmp(cmdStr, "PUSH") == 0) {
-            EmitInArr(code_arr, last_index, cmdPUSH);
+            EmitInArr(buffer, cmdPUSH);
 
             int status = fscanf(source_file, "%d", &arg);
 
@@ -130,26 +144,26 @@ int TranReadCmdFromFile(int* code_arr,
                 return 1;
             }
 
-            EmitInArr(code_arr, last_index, arg);
+            EmitInArr(buffer, arg);
         }
 
         else if (strcmp(cmdStr, "ADD") == 0)
-            EmitInArr(code_arr, last_index, cmdADD);
+            EmitInArr(buffer, cmdADD);
 
         else if (strcmp(cmdStr, "SQVRT") == 0)
-            EmitInArr(code_arr, last_index, cmdSQVRT);
+            EmitInArr(buffer, cmdSQVRT);
 
         else if (strcmp(cmdStr, "SUB") == 0)
-            EmitInArr(code_arr, last_index, cmdSUB);
+            EmitInArr(buffer, cmdSUB);
 
         else if (strcmp(cmdStr, "OUT") == 0)
-            EmitInArr(code_arr, last_index, cmdOUT);
+            EmitInArr(buffer, cmdOUT);
 
         else if (strcmp(cmdStr, "DIV") == 0)
-            EmitInArr(code_arr, last_index, cmdDIV);
+            EmitInArr(buffer, cmdDIV);
 
         else if (strcmp(cmdStr, "HLT") == 0)
-            EmitInArr(code_arr, last_index, cmdHLT);
+            EmitInArr(buffer, cmdHLT);
 
         else{
             TranPrintLogs("Invalid command", line_now, source_file_name);
@@ -167,19 +181,19 @@ int TranReadCmdFromFile(int* code_arr,
     return 0;
 }
 
-int EmitInArr(int* code_arr, size_t* last_index, int value)
+int EmitInArr(struct Buffer* buffer, int value)
 {
-    if (code_arr == NULL){
+    if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
         return 1;
     }
 
-    if (last_index == NULL){
-        PRINT_LOGS("Last index have NULL ptr");
+    if (buffer->code_arr == NULL){
+        PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
 
-    code_arr[(*last_index)++] = value;
+    buffer->code_arr[(buffer->last_index)++] = value;
     return 0;
 }
 
