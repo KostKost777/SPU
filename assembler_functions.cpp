@@ -99,7 +99,6 @@ void AssemEndProcessing()
 
 int AssemReadCmdFromFile(struct Buffer* buffer)
 {
-    const char* source_file_name = "source.asm";
 
     if (buffer == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
@@ -111,73 +110,83 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
         return 1;
     }
 
-    FILE* source_file = fopen(source_file_name, "r");
+    const char* source_file_name = "source.asm";
 
-    if (source_file == NULL) {
-        PRINT_LOGS("The source file did not open");
-        return 1;
-    }
+    char str_buffer[CAPACITY];
+
+    AssemReadInStringBuffer(str_buffer);
+
+    char** str_ptr_arr = (char**)calloc(sizeof(char*), CAPACITY);
+
+    size_t lines = 0;
+
+    CopyFromBufferToStrPtrArr(str_buffer, str_ptr_arr, &lines);
 
     const int MAXLINELEN = 10;
     char cmdStr[MAXLINELEN] = "";
     int arg = 0;
-    size_t line_now = 1;
+    size_t source_file_line_now = 1;
 
-    while (true) {
+    //printf("%d", lines);
 
-        if (fscanf(source_file, "%s", cmdStr) == EOF)
+    for (size_t i = 0; i < lines; ++i) {
+
+        int status = sscanf(str_ptr_arr[i], "%s %d", cmdStr, &arg);
+
+        //printf("%s\n", cmdStr);
+
+        if (status == EOF)
             break;
 
-        if (buffer->last_index >= CAPACITY){
-            PRINT_LOGS("Not enought memory in buffer, please increase capacity");
+        if (status == 0) {
+            AssemPrintLogs("Invalid command", source_file_line_now,
+                                              source_file_name);
             return 1;
         }
 
-        if (strcmp(cmdStr, "PUSH") == 0) {
-            EmitInArr(buffer, cmdPUSH);
+        if (status == 1) {
+            if (strcmp(cmdStr, "ADD") == 0)
+                EmitInArr(buffer, cmdADD);
 
-            int status = fscanf(source_file, "%d", &arg);
+            else if (strcmp(cmdStr, "SQVRT") == 0)
+                EmitInArr(buffer, cmdSQVRT);
 
-            if (status == 0) {
-                TranPrintLogs("Incorrect syntax of the PUSH operation",
-                              line_now, source_file_name);
+            else if (strcmp(cmdStr, "SUB") == 0)
+                EmitInArr(buffer, cmdSUB);
+
+            else if (strcmp(cmdStr, "OUT") == 0)
+                EmitInArr(buffer, cmdOUT);
+
+            else if (strcmp(cmdStr, "DIV") == 0)
+                EmitInArr(buffer, cmdDIV);
+
+            else if (strcmp(cmdStr, "HLT") == 0)
+                EmitInArr(buffer, cmdHLT);
+
+            else{
+                AssemPrintLogs("Invalid command", source_file_line_now,
+                                                  source_file_name);
                 return 1;
             }
-
-            EmitInArr(buffer, arg);
         }
 
-        else if (strcmp(cmdStr, "ADD") == 0)
-            EmitInArr(buffer, cmdADD);
+        else if (status == 2) {
 
-        else if (strcmp(cmdStr, "SQVRT") == 0)
-            EmitInArr(buffer, cmdSQVRT);
+            if (strcmp(cmdStr, "PUSH") == 0) {
+                EmitInArr(buffer, cmdPUSH);
+                EmitInArr(buffer, arg);
+            }
 
-        else if (strcmp(cmdStr, "SUB") == 0)
-            EmitInArr(buffer, cmdSUB);
-
-        else if (strcmp(cmdStr, "OUT") == 0)
-            EmitInArr(buffer, cmdOUT);
-
-        else if (strcmp(cmdStr, "DIV") == 0)
-            EmitInArr(buffer, cmdDIV);
-
-        else if (strcmp(cmdStr, "HLT") == 0)
-            EmitInArr(buffer, cmdHLT);
-
-        else{
-            TranPrintLogs("Invalid command", line_now, source_file_name);
-            return 1;
+            else {
+                AssemPrintLogs("Invalid command", source_file_line_now,
+                                                  source_file_name);
+                return 1;
+            }
         }
 
-        line_now++;
+        source_file_line_now++;
     }
 
-    //printf("%d", capacity);
-
-    //printf("%u\n", last_index);
-
-    fclose(source_file);
     return 0;
 }
 
@@ -194,6 +203,64 @@ int EmitInArr(struct Buffer* buffer, int value)
     }
 
     buffer->code_arr[(buffer->last_index)++] = value;
+    return 0;
+}
+
+int AssemReadInStringBuffer(char* str_buffer)
+{
+    const char* source_file_name = "source.asm";
+
+    FILE* source_file = fopen(source_file_name, "r");
+
+    if (source_file == NULL) {
+        PRINT_LOGS("The source file did not open");
+        return 1;
+    }
+
+    int str_arr_capacity = fread(str_buffer, sizeof(char), CAPACITY, source_file);
+
+    str_buffer[str_arr_capacity] = '\0';
+
+    fclose(source_file);
+
+    return 0;
+}
+
+int CopyFromBufferToStrPtrArr(char* str_buffer,
+                              char** str_ptr_arr, size_t* lines)
+{
+    assert(str_buffer != NULL);
+    assert(str_ptr_arr != NULL);
+
+    char* line_begin_ptr = str_buffer;
+    char* now_ptr = NULL;
+    size_t buffer_index = 0;
+    size_t str_arr_index = 0;
+
+    for (;; ++buffer_index) {
+        if (str_buffer[buffer_index] == '\n' ||
+            str_buffer[buffer_index] == '\0') {
+
+            now_ptr = &str_buffer[buffer_index];
+            str_ptr_arr[str_arr_index] = line_begin_ptr;
+
+            str_arr_index++;
+            line_begin_ptr = now_ptr + 1;
+
+            (*lines)++;
+
+            if (str_buffer[buffer_index] == '\0')
+                break;
+
+            str_buffer[buffer_index] = '\0';
+
+            if (CAPACITY <= str_arr_index){
+                PRINT_LOGS("Make CAPACITY bigger");
+                return 1;
+            }
+        }
+    }
+
     return 0;
 }
 
