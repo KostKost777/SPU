@@ -54,16 +54,20 @@ int SPUReadCmdFromFile(struct Buffer* buffer)
 
 int SPURunCmdFromBuffer(struct SPU* spu)
 {
-    for (size_t i = 0; i < spu->buffer.size; ++i){
-        switch(spu->buffer.code_arr[i])
+    for (; spu->cp < spu->buffer.size; ++(spu->cp)){
+
+        SPUdump(spu);
+        getchar();
+
+        switch(spu->buffer.code_arr[spu->cp])
         {
             case cmdHLT: return 0;
 
-            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++i]);
+            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->cp]);
                           break;
 
             case cmdSQVRT: Sqvrt(&spu->stk);
-                         break;
+                           break;
 
             case cmdADD: Add(&spu->stk);
                          break;
@@ -80,11 +84,27 @@ int SPURunCmdFromBuffer(struct SPU* spu)
             case cmdMUL: Mul(&spu->stk);
                          break;
 
+            case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->cp]);
+                            break;
+
+            case cmdPUSHREG: PushReg(spu, spu->buffer.code_arr[++spu->cp]);
+                             break;
+
             default: PRINT_LOGS("Invalid command");
                      return 1;
         }
     }
     return 0;
+}
+
+void PopReg(struct SPU* spu, int reg_index)
+{
+    StackPop(&spu->stk, &spu->regs[reg_index]);
+}
+
+void PushReg(struct SPU* spu, int reg_index)
+{
+    StackPush(&spu->stk, spu->regs[reg_index]);
 }
 
 void Push(Stack* stk, int arg)
@@ -140,7 +160,36 @@ void Out(Stack* stk)
 
     StackPop(stk, &elem);
 
-    printf("Answer is: %d", elem);
+    printf("Answer is: %d\n", elem);
+}
+
+void SPUdump(struct SPU* spu)
+{
+    printf("--------------------------------------------------------\n");
+    printf("STACK: \n");
+    for (int i = CANARY_CONST; i < spu->stk.size; ++i) {
+        printf("    *[%d] - %d\n", i, spu->stk.data[i]);
+    }
+
+    printf("CODE_ARR: \n");
+
+    for (size_t i = 0; i < spu->buffer.size; ++i) {
+        if (i == spu->cp) {
+            printf("(%d) ", spu->buffer.code_arr[i]);
+            continue;
+        }
+        printf("%d ", spu->buffer.code_arr[i]);
+    }
+
+    printf("\n");
+
+    printf("REGISTERS:\n");
+    char reg_name = 'A';
+    for (size_t i = 0; i < NUMBEROFREGS; ++i, reg_name++) {
+        printf("[%cX]  -  [%d]\n", reg_name, spu->regs[i]);
+    }
+
+    printf("CP: %u\n", spu->cp);
 }
 
 

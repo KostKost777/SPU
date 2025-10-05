@@ -9,6 +9,12 @@ struct SPU
     int regs[NUMBEROFREGS];
 };
 
+void SPUdump(struct SPU* spu);
+
+void PopReg(struct SPU* spu, int reg_index);
+
+void PushReg(struct SPU* spu, int reg_index);
+
 int SPUCtor(struct SPU* spu);
 
 int SPUReadCmdFromFile(struct Buffer* buffer);

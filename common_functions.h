@@ -12,7 +12,9 @@ enum CmdCodes
     cmdDIV = 4,
     cmdOUT = 5,
     cmdMUL = 6,
-    cmdSQVRT = 7
+    cmdSQVRT = 7,
+    cmdPUSHREG = 33,
+    cmdPOPREG = 52,
 };
 
 const size_t NUMBEROFREGS = 5; //AX, BX, CX, DX, EX

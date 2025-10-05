@@ -126,24 +126,26 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
     int arg = 0;
     size_t source_file_line_now = 1;
 
+    char reg_name = '\0';
+
     //printf("%d", lines);
 
     for (size_t i = 0; i < lines; ++i) {
 
-        int status = sscanf(str_ptr_arr[i], "%s %d", cmdStr, &arg);
+        int status = sscanf(str_ptr_arr[i], "%s", cmdStr);
 
         //printf("%s\n", cmdStr);
 
         if (status == EOF)
             break;
 
-        if (status == 0) {
+        else if (status == 0) {
             AssemPrintLogs("Invalid command", source_file_line_now,
                                               source_file_name);
             return 1;
         }
 
-        if (status == 1) {
+        else if (status == 1) {
             if (strcmp(cmdStr, "ADD") == 0)
                 EmitInArr(buffer, cmdADD);
 
@@ -156,27 +158,34 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
             else if (strcmp(cmdStr, "OUT") == 0)
                 EmitInArr(buffer, cmdOUT);
 
+            else if (strcmp(cmdStr, "MUL") == 0)
+                EmitInArr(buffer, cmdMUL);
+
             else if (strcmp(cmdStr, "DIV") == 0)
                 EmitInArr(buffer, cmdDIV);
 
             else if (strcmp(cmdStr, "HLT") == 0)
                 EmitInArr(buffer, cmdHLT);
 
-            else{
-                AssemPrintLogs("Invalid command", source_file_line_now,
-                                                  source_file_name);
-                return 1;
-            }
-        }
-
-        else if (status == 2) {
-
-            if (strcmp(cmdStr, "PUSH") == 0) {
+            else if (strcmp(cmdStr, "PUSH") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
                 EmitInArr(buffer, cmdPUSH);
                 EmitInArr(buffer, arg);
             }
 
-            else {
+            else if (strcmp(cmdStr, "PUSHREG") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+                EmitInArr(buffer, cmdPUSHREG);
+                EmitInArr(buffer, reg_name - 'A');
+            }
+
+            else if (strcmp(cmdStr, "POPREG") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+                EmitInArr(buffer, cmdPOPREG);
+                EmitInArr(buffer, reg_name - 'A');
+            }
+
+            else{
                 AssemPrintLogs("Invalid command", source_file_line_now,
                                                   source_file_name);
                 return 1;
