@@ -11,7 +11,6 @@ extern const char* log_file_name;
 int AssemPrintLogs(const char* message,
                   size_t line, const char* source_file_name)
 {
-
     if (log_file == NULL) {
         PRINT_LOGS("The log file did not open");
         return 1;
@@ -55,9 +54,9 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
         return 1;
     }
 
-    for (size_t i = 0; i < buffer->last_index; ++i) {
+    for (size_t i = 0; i < buffer->size; ++i) {
             fprintf(bin_file, "%d", buffer->code_arr[i]);
-            if (i != buffer->last_index - 1)
+            if (i != buffer->size - 1)
                 fprintf(bin_file, " ");
     }
 
@@ -85,7 +84,7 @@ int AssemWriteCmdInBinFile(struct Buffer* buffer)
         return 1;
     }
 
-    fwrite(buffer->code_arr, sizeof(int), buffer->last_index, bin_file);
+    fwrite(buffer->code_arr, sizeof(int), buffer->size, bin_file);
 
     fclose(bin_file);
 
@@ -202,7 +201,7 @@ int EmitInArr(struct Buffer* buffer, int value)
         return 1;
     }
 
-    buffer->code_arr[(buffer->last_index)++] = value;
+    buffer->code_arr[(buffer->size)++] = value;
     return 0;
 }
 

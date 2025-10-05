@@ -2,8 +2,8 @@
 
 #include "dump_functions.h"
 #include "stack_functions.h"
-#include "SPU_functions.h"
 #include "common_functions.h"
+#include "SPU_functions.h"
 
 extern const char* log_file_name;
 
@@ -28,9 +28,9 @@ int ReadCmdFromBinFile(struct Buffer* buffer)
         return 1;
     }
 
-    buffer->last_index = fread(buffer->code_arr,
-                               sizeof(int), CAPACITY,
-                               bin_file);
+    buffer->size = fread(buffer->code_arr,
+                         sizeof(int), CAPACITY,
+                         bin_file);
 
     return 0;
 }

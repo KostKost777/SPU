@@ -1,13 +1,19 @@
 #include <TXLib.h>
 
+#include "common_functions.h"
 #include "dump_functions.h"
 #include "stack_functions.h"
 #include "SPU_functions.h"
-#include "common_functions.h"
 
 extern const char* log_file_name;
 
 extern FILE* log_file;
+
+int SPUCtor(SPU* spu)
+{
+    StackCtor(&spu->stk, CAPACITY);
+    return 0;
+}
 
 int SPUReadCmdFromFile(struct Buffer* buffer)
 {
@@ -30,63 +36,54 @@ int SPUReadCmdFromFile(struct Buffer* buffer)
 
     while (true) {
 
-        if (buffer->last_index >= CAPACITY){
+        if (buffer->size >= CAPACITY){
             PRINT_LOGS("Not enought memory in buffer, please increase capacity");
             return 1;
         }
 
-        //printf("%d\n", (*code_arr)[*last_index]);
+        //printf("%d\n", (*code_arr)[*size]);
 
         if (fscanf(bin_file, "%d",
-                   &(buffer->code_arr[buffer->last_index])) == EOF)
+                   &(buffer->code_arr[buffer->size])) == EOF)
             break;
 
-        buffer->last_index++;
+        buffer->size++;
     }
     return 0;
 }
 
-int SPURunCmdFromBuffer(struct Buffer* buffer)
+int SPURunCmdFromBuffer(struct SPU* spu)
 {
-    INIT_STACK(stk);
-
-    ssize_t stk_size = 1000;
-
-    StackCtor(&stk, stk_size);
-
-    for (size_t i = 0; i < buffer->last_index; ++i){
-        switch(buffer->code_arr[i])
+    for (size_t i = 0; i < spu->buffer.size; ++i){
+        switch(spu->buffer.code_arr[i])
         {
             case cmdHLT: return 0;
 
-            case cmdPUSH: Push(&stk, buffer->code_arr[++i]);
+            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++i]);
                           break;
 
-            case cmdSQVRT: Sqvrt(&stk);
+            case cmdSQVRT: Sqvrt(&spu->stk);
                          break;
 
-            case cmdADD: Add(&stk);
+            case cmdADD: Add(&spu->stk);
                          break;
 
-            case cmdSUB: Sub(&stk);
+            case cmdSUB: Sub(&spu->stk);
                          break;
 
-            case cmdDIV: Div(&stk);
+            case cmdDIV: Div(&spu->stk);
                          break;
 
-            case cmdOUT: Out(&stk);
+            case cmdOUT: Out(&spu->stk);
                          break;
 
-            case cmdMUL: Mul(&stk);
+            case cmdMUL: Mul(&spu->stk);
                          break;
 
             default: PRINT_LOGS("Invalid command");
-                     StackDtor(&stk);
                      return 1;
         }
     }
-
-    StackDtor(&stk);
     return 0;
 }
 
