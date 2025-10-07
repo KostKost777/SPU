@@ -9,11 +9,9 @@ struct SPU
     int regs[NUMBEROFREGS];
 };
 
+void SPUDtor(SPU* spu);
+
 void SPUdump(struct SPU* spu);
-
-void PopReg(struct SPU* spu, int reg_index);
-
-void PushReg(struct SPU* spu, int reg_index);
 
 int SPUCtor(struct SPU* spu);
 
@@ -22,6 +20,14 @@ int SPUReadCmdFromFile(struct Buffer* buffer);
 int SPURunCmdFromBuffer(struct SPU* spu);
 
 void Push(Stack* stk, int arg);
+
+void Jmp(struct SPU* spu, int arg);
+
+void Jb(struct SPU* spu, int arg);
+
+void PopReg(struct SPU* spu, int reg_index);
+
+void PushReg(struct SPU* spu, int reg_index);
 
 void Add(Stack* stk);
 

@@ -54,11 +54,8 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
         return 1;
     }
 
-    for (size_t i = 0; i < buffer->size; ++i) {
-            fprintf(bin_file, "%d", buffer->code_arr[i]);
-            if (i != buffer->size - 1)
-                fprintf(bin_file, " ");
-    }
+    for (size_t i = 0; i < buffer->size; ++i)
+            fprintf(bin_file, "%d ", buffer->code_arr[i]);
 
     fclose(bin_file);
 
@@ -169,18 +166,35 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
 
             else if (strcmp(cmdStr, "PUSH") == 0 &&
                      sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-                EmitInArr(buffer, cmdPUSH);
+
+                    EmitInArr(buffer, cmdPUSH);
+                    EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JMP") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJMP);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JB") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJB);
                 EmitInArr(buffer, arg);
             }
 
             else if (strcmp(cmdStr, "PUSHREG") == 0 &&
                      sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+
                 EmitInArr(buffer, cmdPUSHREG);
                 EmitInArr(buffer, reg_name - 'A');
             }
 
             else if (strcmp(cmdStr, "POPREG") == 0 &&
                      sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+
                 EmitInArr(buffer, cmdPOPREG);
                 EmitInArr(buffer, reg_name - 'A');
             }

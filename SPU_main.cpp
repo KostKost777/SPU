@@ -21,4 +21,7 @@ int main()
     if (SPURunCmdFromBuffer(&spu) == 1)
         return 0;
 
+    SPUDtor(&spu);
+
+    return 0;
 }

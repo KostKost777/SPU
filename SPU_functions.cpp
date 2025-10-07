@@ -15,6 +15,11 @@ int SPUCtor(SPU* spu)
     return 0;
 }
 
+void SPUDtor(SPU* spu)
+{
+    StackDtor(&spu->stk);
+}
+
 int SPUReadCmdFromFile(struct Buffer* buffer)
 {
     if (buffer == NULL){
@@ -56,15 +61,12 @@ int SPURunCmdFromBuffer(struct SPU* spu)
 {
     for (; spu->cp < spu->buffer.size; ++(spu->cp)){
 
-        SPUdump(spu);
-        getchar();
+        // SPUdump(spu);
+        // getchar();
 
         switch(spu->buffer.code_arr[spu->cp])
         {
             case cmdHLT: return 0;
-
-            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->cp]);
-                          break;
 
             case cmdSQVRT: Sqvrt(&spu->stk);
                            break;
@@ -84,6 +86,15 @@ int SPURunCmdFromBuffer(struct SPU* spu)
             case cmdMUL: Mul(&spu->stk);
                          break;
 
+            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->cp]);
+                          break;
+
+            case cmdJMP: Jmp(spu, spu->buffer.code_arr[++spu->cp]);
+                         break;
+
+            case cmdJB: Jb(spu, spu->buffer.code_arr[++spu->cp]);
+                         break;
+
             case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->cp]);
                             break;
 
@@ -99,21 +110,46 @@ int SPURunCmdFromBuffer(struct SPU* spu)
 
 void PopReg(struct SPU* spu, int reg_index)
 {
+    assert(spu != NULL);
+
     StackPop(&spu->stk, &spu->regs[reg_index]);
 }
 
 void PushReg(struct SPU* spu, int reg_index)
 {
+    assert(spu != NULL);
+
     StackPush(&spu->stk, spu->regs[reg_index]);
 }
 
 void Push(Stack* stk, int arg)
 {
+    assert(stk != NULL);
+
     StackPush(stk, arg);
+}
+
+void Jmp(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    spu->cp = arg - 1;
+}
+
+void Jb(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 < elem1)
+        spu->cp = arg - 1;
 }
 
 void Add(Stack* stk)
 {
+    assert(stk != NULL);
+
     GET_TWO_ELEM(stk);
 
     StackPush(stk, elem1 + elem2);
@@ -121,6 +157,8 @@ void Add(Stack* stk)
 
 void Sqvrt(Stack* stk)
 {
+    assert(stk != NULL);
+
     StackValueType elem = 0;
 
     StackPop(stk, &elem);
@@ -130,6 +168,8 @@ void Sqvrt(Stack* stk)
 
 void Sub(Stack* stk)
 {
+    assert(stk != NULL);
+
     GET_TWO_ELEM(stk);
 
     StackPush(stk, elem2 - elem1);
@@ -137,6 +177,8 @@ void Sub(Stack* stk)
 
 void Mul(Stack* stk)
 {
+    assert(stk != NULL);
+
     GET_TWO_ELEM(stk);
 
     StackPush(stk, elem1 * elem2);
@@ -144,6 +186,7 @@ void Mul(Stack* stk)
 
 void Div(Stack* stk)
 {
+    assert(stk != NULL);
 
     GET_TWO_ELEM(stk);
 
@@ -156,6 +199,8 @@ void Div(Stack* stk)
 
 void Out(Stack* stk)
 {
+    assert(stk != NULL);
+
     StackValueType elem = 0;
 
     StackPop(stk, &elem);
