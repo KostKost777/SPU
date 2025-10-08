@@ -18,6 +18,9 @@ int main()
     if (ReadCmdFromBinFile(&(spu.buffer)) == 1)
         return 0;
 
+    if (SPUVerifier(&spu) == 1)
+        return 0;
+
     if (SPURunCmdFromBuffer(&spu) == 1)
         return 0;
 

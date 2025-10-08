@@ -9,7 +9,7 @@ extern FILE* log_file;
 extern const char* log_file_name;
 
 int AssemPrintLogs(const char* message,
-                  size_t line, const char* source_file_name)
+                   size_t line, const char* source_file_name)
 {
     if (log_file == NULL) {
         PRINT_LOGS("The log file did not open");
@@ -55,7 +55,7 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
     }
 
     for (size_t i = 0; i < buffer->size; ++i)
-            fprintf(bin_file, "%d ", buffer->code_arr[i]);
+        fprintf(bin_file, "%d ", buffer->code_arr[i]);
 
     fclose(bin_file);
 
@@ -64,12 +64,12 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
 
 int AssemWriteCmdInBinFile(struct Buffer* buffer)
 {
-    if (buffer == NULL){
+    if (buffer == NULL) {
         PRINT_LOGS("Buffer have NULL ptr");
         return 1;
     }
 
-    if (buffer->code_arr == NULL){
+    if (buffer->code_arr == NULL) {
         PRINT_LOGS("Array with commands have NULL ptr");
         return 1;
     }
@@ -117,11 +117,17 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
     size_t lines = 0;
 
     CopyFromBufferToStrPtrArr(str_buffer, str_ptr_arr, &lines);
+    //printf("ll: %d\n", lines);
 
-    const int MAXLINELEN = 10;
-    char cmdStr[MAXLINELEN] = "";
+    const int MAXCMDLEN = 10;
+    char cmdStr[MAXCMDLEN] = "";
     int arg = 0;
     size_t source_file_line_now = 1;
+
+   // printf("%u\n", buffer->code_arr[0]);
+
+    buffer->code_arr[0] = MASK;
+    buffer->code_arr[1] = VERSION;
 
     char reg_name = '\0';
 
@@ -133,8 +139,10 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
 
         //printf("%s\n", cmdStr);
 
-        if (status == EOF)
+        if (status == EOF){
+            PRINT_LOGS("END OF FILE");
             break;
+        }
 
         else if (status == 0) {
             AssemPrintLogs("Invalid command", source_file_line_now,
@@ -164,11 +172,14 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
             else if (strcmp(cmdStr, "HLT") == 0)
                 EmitInArr(buffer, cmdHLT);
 
+            else if (strcmp(cmdStr, "IN") == 0)
+                EmitInArr(buffer, cmdIN);
+
             else if (strcmp(cmdStr, "PUSH") == 0 &&
                      sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
 
-                    EmitInArr(buffer, cmdPUSH);
-                    EmitInArr(buffer, arg);
+                EmitInArr(buffer, cmdPUSH);
+                EmitInArr(buffer, arg);
             }
 
             else if (strcmp(cmdStr, "JMP") == 0 &&
@@ -182,6 +193,41 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
                      sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
 
                 EmitInArr(buffer, cmdJB);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JBE") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJBE);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JA") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJA);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JAE") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJAE);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JE") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJE);
+                EmitInArr(buffer, arg);
+            }
+
+            else if (strcmp(cmdStr, "JNE") == 0 &&
+                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+
+                EmitInArr(buffer, cmdJNE);
                 EmitInArr(buffer, arg);
             }
 
@@ -239,10 +285,10 @@ int AssemReadInStringBuffer(char* str_buffer)
         return 1;
     }
 
-    int str_arr_capacity = fread(str_buffer, sizeof(char), CAPACITY, source_file);
+    int str_arr_capacity = fread(str_buffer, sizeof(char), CAPCITY, source_file);
 
-    str_buffer[str_arr_capacity] = '\0';
-
+    str_buffer[str_arr_capacity + 1] = '\0';
+    printf("%s", str_buffer);
     fclose(source_file);
 
     return 0;
@@ -271,8 +317,10 @@ int CopyFromBufferToStrPtrArr(char* str_buffer,
 
             (*lines)++;
 
-            if (str_buffer[buffer_index] == '\0')
+            if (str_buffer[buffer_index] == '\0'){
+                //printf("line: %u\n", *lines);
                 break;
+            }
 
             str_buffer[buffer_index] = '\0';
 
@@ -282,7 +330,6 @@ int CopyFromBufferToStrPtrArr(char* str_buffer,
             }
         }
     }
-
     return 0;
 }
 

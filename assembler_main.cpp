@@ -13,7 +13,7 @@ int main()
 {
     struct Buffer buffer = {};
 
-    buffer.size = 0;
+    buffer.size = 2;
 
     if (AssemReadCmdFromFile(&buffer) == 1) {
         AssemEndProcessing();

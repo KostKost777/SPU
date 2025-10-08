@@ -1,7 +1,9 @@
 #ifndef COMMON
 #define COMMON
 
-const int MAXCMD = 8;
+const int VERSION = 2;
+
+const int MASK = 1380077378; //BOBR
 
 enum CmdCodes
 {
@@ -15,11 +17,17 @@ enum CmdCodes
     cmdSQVRT = 7,
     cmdJMP = 8,
     cmdJB = 9,
+    cmdJBE = 10,
+    cmdJA = 11,
+    cmdJAE = 12,
+    cmdJE = 13,
+    cmdJNE = 14,
+    cmdIN = 15,
     cmdPUSHREG = 33,
     cmdPOPREG = 52
 };
 
-const size_t NUMBEROFREGS = 5; //AX, BX, CX, DX, EX
+const size_t NUMBEROFREGS = 7; //AX, BX, CX, DX, EX, FX, GX
 
 const size_t CAPACITY = 500;
 

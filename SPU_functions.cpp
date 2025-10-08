@@ -12,12 +12,31 @@ extern FILE* log_file;
 int SPUCtor(SPU* spu)
 {
     StackCtor(&spu->stk, CAPACITY);
+    spu->cp = CODEARROFFSET;
+    return 0;
+}
+
+int SPUVerifier(SPU* spu)
+{
+    assert(spu != NULL);
+
+    if (spu->buffer.code_arr[0] != MASK) {
+        PRINT_LOGS("This byte code is not for this processor.");
+        return 1;
+    }
+
+    if (spu->buffer.code_arr[1] != VERSION) {
+        PRINT_LOGS("This processor version is outdated, please recompile it.");
+        return 1;
+    }
+
     return 0;
 }
 
 void SPUDtor(SPU* spu)
 {
     StackDtor(&spu->stk);
+    fclose(log_file);
 }
 
 int SPUReadCmdFromFile(struct Buffer* buffer)
@@ -43,6 +62,7 @@ int SPUReadCmdFromFile(struct Buffer* buffer)
 
         if (buffer->size >= CAPACITY){
             PRINT_LOGS("Not enought memory in buffer, please increase capacity");
+            fclose(bin_file);
             return 1;
         }
 
@@ -54,12 +74,14 @@ int SPUReadCmdFromFile(struct Buffer* buffer)
 
         buffer->size++;
     }
+
+    fclose(bin_file);
     return 0;
 }
 
 int SPURunCmdFromBuffer(struct SPU* spu)
 {
-    for (; spu->cp < spu->buffer.size; ++(spu->cp)){
+    for (; spu->cp < spu->buffer.size; ++(spu->cp)) {
 
         // SPUdump(spu);
         // getchar();
@@ -86,6 +108,9 @@ int SPURunCmdFromBuffer(struct SPU* spu)
             case cmdMUL: Mul(&spu->stk);
                          break;
 
+            case cmdIN: In(&spu->stk);
+                         break;
+
             case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->cp]);
                           break;
 
@@ -93,7 +118,22 @@ int SPURunCmdFromBuffer(struct SPU* spu)
                          break;
 
             case cmdJB: Jb(spu, spu->buffer.code_arr[++spu->cp]);
-                         break;
+                        break;
+
+            case cmdJBE: Jbe(spu, spu->buffer.code_arr[++spu->cp]);
+                        break;
+
+            case cmdJA: Ja(spu, spu->buffer.code_arr[++spu->cp]);
+                        break;
+
+            case cmdJAE: Jae(spu, spu->buffer.code_arr[++spu->cp]);
+                        break;
+
+            case cmdJE: Je(spu, spu->buffer.code_arr[++spu->cp]);
+                        break;
+
+            case cmdJNE: Jne(spu, spu->buffer.code_arr[++spu->cp]);
+                        break;
 
             case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->cp]);
                             break;
@@ -133,7 +173,7 @@ void Jmp(struct SPU* spu, int arg)
 {
     assert(spu != NULL);
 
-    spu->cp = arg - 1;
+    spu->cp = CODEARROFFSET + arg - 1;
 }
 
 void Jb(struct SPU* spu, int arg)
@@ -143,7 +183,72 @@ void Jb(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 < elem1)
-        spu->cp = arg - 1;
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void Jbe(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 <= elem1)
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void Ja(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 > elem1)
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void Jae(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 >= elem1)
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void Je(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 == elem1)
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void Jne(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    GET_TWO_ELEM(&spu->stk);
+
+    if (elem2 != elem1)
+        spu->cp = CODEARROFFSET + arg - 1;
+}
+
+void In(struct Stack* stk)
+{
+    assert(stk != NULL);
+
+    int value = 0;
+    printf("Enter number: ");
+    while (scanf("%d", &value) != 1) {
+        SkipLine();
+        printf("Wrong input\n");
+        printf("Enter number: ");
+    }
+
+    StackPush(stk, value);
 }
 
 void Add(Stack* stk)
@@ -212,6 +317,7 @@ void SPUdump(struct SPU* spu)
 {
     printf("--------------------------------------------------------\n");
     printf("STACK: \n");
+    printf("SIZE: %d \n", spu->stk.size);
     for (int i = CANARY_CONST; i < spu->stk.size; ++i) {
         printf("    *[%d] - %d\n", i, spu->stk.data[i]);
     }
@@ -235,6 +341,13 @@ void SPUdump(struct SPU* spu)
     }
 
     printf("CP: %u\n", spu->cp);
+}
+
+void SkipLine(void)
+{
+    int ch = 0;
+    while ((ch = getchar()) != '\n')
+        continue;
 }
 
 
