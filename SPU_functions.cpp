@@ -11,8 +11,13 @@ extern FILE* log_file;
 
 int SPUCtor(SPU* spu)
 {
+    assert(spu != NULL);
+
     StackCtor(&spu->stk, CAPACITY);
-    spu->cp = CODEARROFFSET;
+    spu->pc = CODEARROFFSET;
+    spu->buffer.size = CODEARROFFSET;
+    spu->buffer.code_arr = (int*)calloc(CAPACITY, sizeof(int));
+
     return 0;
 }
 
@@ -22,12 +27,29 @@ int SPUVerifier(SPU* spu)
 
     if (spu->buffer.code_arr[0] != MASK) {
         PRINT_LOGS("This byte code is not for this processor.");
-        return 1;
+        spu->err_code |= mask_err;
+        return mask_err;
     }
 
     if (spu->buffer.code_arr[1] != VERSION) {
         PRINT_LOGS("This processor version is outdated, please recompile it.");
-        return 1;
+        spu->err_code |= version_err;
+        return version_err;
+    }
+
+    if (spu->buffer.size < 0 || spu->buffer.size >= CAPACITY) {
+        spu->err_code |= code_arr_size_err;
+        return code_arr_size_err;
+    }
+
+    if (spu->pc < 0 || spu->pc >= CAPACITY) {
+        spu->err_code |= pc_err;
+        return pc_err;
+    }
+
+    if (spu->buffer.code_arr == NULL) {
+        spu->err_code |= code_arr_ptr_err;
+        return code_arr_ptr_err;
     }
 
     return 0;
@@ -81,12 +103,12 @@ int SPUReadCmdFromFile(struct Buffer* buffer)
 
 int SPURunCmdFromBuffer(struct SPU* spu)
 {
-    for (; spu->cp < spu->buffer.size; ++(spu->cp)) {
+    for (; spu->pc < spu->buffer.size; ++(spu->pc)) {
 
-        // SPUdump(spu);
-        // getchar();
+         SPUdump(spu);
+         getchar();
 
-        switch(spu->buffer.code_arr[spu->cp])
+        switch(spu->buffer.code_arr[spu->pc])
         {
             case cmdHLT: return 0;
 
@@ -111,34 +133,34 @@ int SPURunCmdFromBuffer(struct SPU* spu)
             case cmdIN: In(&spu->stk);
                          break;
 
-            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->cp]);
+            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->pc]);
                           break;
 
-            case cmdJMP: Jmp(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJMP: Jmp(spu, spu->buffer.code_arr[++spu->pc]);
                          break;
 
-            case cmdJB: Jb(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJB: Jb(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdJBE: Jbe(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJBE: Jbe(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdJA: Ja(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJA: Ja(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdJAE: Jae(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJAE: Jae(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdJE: Je(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJE: Je(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdJNE: Jne(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdJNE: Jne(spu, spu->buffer.code_arr[++spu->pc]);
                         break;
 
-            case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->pc]);
                             break;
 
-            case cmdPUSHREG: PushReg(spu, spu->buffer.code_arr[++spu->cp]);
+            case cmdPUSHREG: PushReg(spu, spu->buffer.code_arr[++spu->pc]);
                              break;
 
             default: PRINT_LOGS("Invalid command");
@@ -173,7 +195,7 @@ void Jmp(struct SPU* spu, int arg)
 {
     assert(spu != NULL);
 
-    spu->cp = CODEARROFFSET + arg - 1;
+    spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Jb(struct SPU* spu, int arg)
@@ -183,7 +205,7 @@ void Jb(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 < elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Jbe(struct SPU* spu, int arg)
@@ -193,7 +215,7 @@ void Jbe(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 <= elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Ja(struct SPU* spu, int arg)
@@ -203,7 +225,7 @@ void Ja(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 > elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Jae(struct SPU* spu, int arg)
@@ -213,7 +235,7 @@ void Jae(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 >= elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Je(struct SPU* spu, int arg)
@@ -223,7 +245,7 @@ void Je(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 == elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void Jne(struct SPU* spu, int arg)
@@ -233,7 +255,7 @@ void Jne(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 != elem1)
-        spu->cp = CODEARROFFSET + arg - 1;
+        spu->pc = CODEARROFFSET + arg - 1;
 }
 
 void In(struct Stack* stk)
@@ -316,6 +338,10 @@ void Out(Stack* stk)
 void SPUdump(struct SPU* spu)
 {
     printf("--------------------------------------------------------\n");
+
+    if (spu->err_code != 0)
+        PrintSPUErrors(spu->err_code);
+
     printf("STACK: \n");
     printf("SIZE: %d \n", spu->stk.size);
     for (int i = CANARY_CONST; i < spu->stk.size; ++i) {
@@ -325,7 +351,7 @@ void SPUdump(struct SPU* spu)
     printf("CODE_ARR: \n");
 
     for (size_t i = 0; i < spu->buffer.size; ++i) {
-        if (i == spu->cp) {
+        if (i == spu->pc) {
             printf("(%d) ", spu->buffer.code_arr[i]);
             continue;
         }
@@ -340,7 +366,26 @@ void SPUdump(struct SPU* spu)
         printf("[%cX]  -  [%d]\n", reg_name, spu->regs[i]);
     }
 
-    printf("CP: %u\n", spu->cp);
+    printf("PC: %u\n", spu->pc);
+}
+
+void PrintSPUErrors(int err_code)
+{
+    if (err_code & mask_err)
+        PRINT_LOGS("This byte code is not for this processor.");
+
+    if (err_code & version_err)
+        PRINT_LOGS("This processor version is outdated, please recompile it.");
+
+    if (err_code & code_arr_size_err)
+        PRINT_LOGS("Invalid array size with codes");
+
+    if (err_code & pc_err)
+        PRINT_LOGS("Invalid current command index");
+
+    if (err_code & code_arr_ptr_err)
+        PRINT_LOGS("Null pointer to an array of commands");
+
 }
 
 void SkipLine(void)

@@ -27,13 +27,22 @@ enum CmdCodes
     cmdPOPREG = 52
 };
 
+struct StructCmdWithName {
+    const char* name;
+    int cmd;
+};
+
+const int NUMOFSINGLEARGFUNCS = 8;
+
+const int NUMOFNOARGFUNCS = 8;
+
 const size_t NUMBEROFREGS = 7; //AX, BX, CX, DX, EX, FX, GX
 
-const size_t CAPACITY = 500;
+const size_t CAPACITY = 1500;
 
 struct Buffer
 {
-    int code_arr[CAPACITY];
+    int* code_arr;
     size_t size;
 };
 

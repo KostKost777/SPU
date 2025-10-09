@@ -4,9 +4,16 @@
 #include "common_functions.h"
 #include "dump_functions.h"
 
+#include "MC_Onegin\read_poem_from_file_functions.h"
+#include "MC_Onegin\text_functions.h"
+
 extern FILE* log_file;
 
 extern const char* log_file_name;
+
+extern StructCmdWithName no_arg_funcs[NUMOFNOARGFUNCS];
+extern StructCmdWithName single_arg_funcs[NUMOFSINGLEARGFUNCS];
+extern const char* reg_name_arr[NUMBEROFREGS];
 
 int AssemPrintLogs(const char* message,
                    size_t line, const char* source_file_name)
@@ -88,8 +95,10 @@ int AssemWriteCmdInBinFile(struct Buffer* buffer)
     return 0;
 }
 
-void AssemEndProcessing()
+void AssemEndProcessing(struct Buffer* buffer)
 {
+    free(buffer->code_arr);
+    buffer->code_arr = NULL;
     fclose(log_file);
 }
 
@@ -108,15 +117,10 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
 
     const char* source_file_name = "source.asm";
 
-    char str_buffer[CAPACITY];
+    Struct_Poem Asmtext = {};
 
-    AssemReadInStringBuffer(str_buffer);
+    ReadPoemStructFromFile(&Asmtext, source_file_name);
 
-    char** str_ptr_arr = (char**)calloc(sizeof(char*), CAPACITY);
-
-    size_t lines = 0;
-
-    CopyFromBufferToStrPtrArr(str_buffer, str_ptr_arr, &lines);
     //printf("ll: %d\n", lines);
 
     const int MAXCMDLEN = 10;
@@ -129,15 +133,18 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
     buffer->code_arr[0] = MASK;
     buffer->code_arr[1] = VERSION;
 
-    char reg_name = '\0';
+    int reg_index = 0;
 
     //printf("%d", lines);
 
-    for (size_t i = 0; i < lines; ++i) {
+    for (size_t i = 0; i < Asmtext.number_of_lines; ++i) {
 
-        int status = sscanf(str_ptr_arr[i], "%s", cmdStr);
+        bool check_correct_cmd = false;
 
-        //printf("%s\n", cmdStr);
+        int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
+                            "%s", cmdStr);
+
+        //printf("NOW FUNC: %s\n", cmdStr);
 
         if (status == EOF){
             PRINT_LOGS("END OF FILE");
@@ -151,101 +158,50 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
         }
 
         else if (status == 1) {
-            if (strcmp(cmdStr, "ADD") == 0)
-                EmitInArr(buffer, cmdADD);
 
-            else if (strcmp(cmdStr, "SQVRT") == 0)
-                EmitInArr(buffer, cmdSQVRT);
-
-            else if (strcmp(cmdStr, "SUB") == 0)
-                EmitInArr(buffer, cmdSUB);
-
-            else if (strcmp(cmdStr, "OUT") == 0)
-                EmitInArr(buffer, cmdOUT);
-
-            else if (strcmp(cmdStr, "MUL") == 0)
-                EmitInArr(buffer, cmdMUL);
-
-            else if (strcmp(cmdStr, "DIV") == 0)
-                EmitInArr(buffer, cmdDIV);
-
-            else if (strcmp(cmdStr, "HLT") == 0)
-                EmitInArr(buffer, cmdHLT);
-
-            else if (strcmp(cmdStr, "IN") == 0)
-                EmitInArr(buffer, cmdIN);
-
-            else if (strcmp(cmdStr, "PUSH") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdPUSH);
-                EmitInArr(buffer, arg);
+            for (int index = 0; index < NUMOFNOARGFUNCS; ++index) {
+                if (strcmp(no_arg_funcs[index].name, cmdStr) == 0){
+                    //printf("cmd0: %s\n", no_arg_funcs[index].name);
+                    EmitInArr(buffer, no_arg_funcs[index].cmd);
+                    check_correct_cmd = true;
+                    break;
+                }
             }
 
-            else if (strcmp(cmdStr, "JMP") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
+            for (int index = 0; index < NUMOFSINGLEARGFUNCS; ++index) {
+                if (strcmp(single_arg_funcs[index].name, cmdStr) == 0 &&
+                    sscanf(Asmtext.poem_ptr_array[i].line_ptr,
+                    "%*s %d", &arg) == 1){
 
-                EmitInArr(buffer, cmdJMP);
-                EmitInArr(buffer, arg);
+                    //printf("cmd1: %s\n", single_arg_funcs[index].name);
+                    EmitInArr(buffer, single_arg_funcs[index].cmd);
+                    EmitInArr(buffer, arg);
+                    check_correct_cmd = true;
+                    break;
+                }
             }
 
-            else if (strcmp(cmdStr, "JB") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJB);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "JBE") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJBE);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "JA") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJA);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "JAE") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJAE);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "JE") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJE);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "JNE") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %d", &arg) == 1) {
-
-                EmitInArr(buffer, cmdJNE);
-                EmitInArr(buffer, arg);
-            }
-
-            else if (strcmp(cmdStr, "PUSHREG") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+            if (strcmp(cmdStr, "PUSHREG") == 0 &&
+                    (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
+                     != -1) {
 
                 EmitInArr(buffer, cmdPUSHREG);
-                EmitInArr(buffer, reg_name - 'A');
+                EmitInArr(buffer, reg_index);
+
+                check_correct_cmd = true;
             }
 
             else if (strcmp(cmdStr, "POPREG") == 0 &&
-                     sscanf(str_ptr_arr[i], "%*s %c", &reg_name) == 1) {
+                    (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
+                     != -1) {
 
                 EmitInArr(buffer, cmdPOPREG);
-                EmitInArr(buffer, reg_name - 'A');
+                EmitInArr(buffer, reg_index);
+
+                check_correct_cmd = true;
             }
 
-            else{
+            if (check_correct_cmd == false){
                 AssemPrintLogs("Invalid command", source_file_line_now,
                                                   source_file_name);
                 return 1;
@@ -274,66 +230,24 @@ int EmitInArr(struct Buffer* buffer, int value)
     return 0;
 }
 
-int AssemReadInStringBuffer(char* str_buffer)
+int GetRegIndex(char* str_with_reg)
 {
-    const char* source_file_name = "source.asm";
+    assert(str_with_reg != NULL);
 
-    FILE* source_file = fopen(source_file_name, "r");
+    const int MAXREGNAMELEN = 3;
 
-    if (source_file == NULL) {
-        PRINT_LOGS("The source file did not open");
-        return 1;
-    }
+    char regname[MAXREGNAMELEN] = {};
 
-    int str_arr_capacity = fread(str_buffer, sizeof(char), CAPCITY, source_file);
+    int status = sscanf(str_with_reg, "%*s %s", regname);
 
-    str_buffer[str_arr_capacity + 1] = '\0';
-    printf("%s", str_buffer);
-    fclose(source_file);
+    if (status == 0)
+        return -1;
 
-    return 0;
-}
-
-int CopyFromBufferToStrPtrArr(char* str_buffer,
-                              char** str_ptr_arr, size_t* lines)
-{
-    assert(str_buffer != NULL);
-    assert(str_ptr_arr != NULL);
-
-    char* line_begin_ptr = str_buffer;
-    char* now_ptr = NULL;
-    size_t buffer_index = 0;
-    size_t str_arr_index = 0;
-
-    for (;; ++buffer_index) {
-        if (str_buffer[buffer_index] == '\n' ||
-            str_buffer[buffer_index] == '\0') {
-
-            now_ptr = &str_buffer[buffer_index];
-            str_ptr_arr[str_arr_index] = line_begin_ptr;
-
-            str_arr_index++;
-            line_begin_ptr = now_ptr + 1;
-
-            (*lines)++;
-
-            if (str_buffer[buffer_index] == '\0'){
-                //printf("line: %u\n", *lines);
-                break;
-            }
-
-            str_buffer[buffer_index] = '\0';
-
-            if (CAPACITY <= str_arr_index){
-                PRINT_LOGS("Make CAPACITY bigger");
-                return 1;
-            }
+    for (size_t i = 0; i < NUMBEROFREGS; ++i) {
+        if (strcmp(reg_name_arr[i], regname) == 0) {
+            return reg_name_arr[i][0] - 'A';
         }
     }
-    return 0;
+
+    return -1;
 }
-
-
-
-
-

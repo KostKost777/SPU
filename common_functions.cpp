@@ -9,6 +9,28 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
+StructCmdWithName no_arg_funcs[NUMOFNOARGFUNCS] = { {"IN", cmdIN},
+                                                    {"HLT", cmdHLT},
+                                                    {"ADD", cmdADD},
+                                                    {"SUB", cmdSUB},
+                                                    {"DIV", cmdDIV},
+                                                    {"OUT", cmdOUT},
+                                                    {"MUL", cmdMUL},
+                                                    {"SQVRT", cmdSQVRT}};
+
+StructCmdWithName single_arg_funcs[NUMOFSINGLEARGFUNCS] = {{"JMP", cmdJMP},
+                                                            {"JB", cmdJB},
+                                                            {"JBE", cmdJBE},
+                                                            {"JA", cmdJA},
+                                                            {"JAE", cmdJAE},
+                                                            {"JE", cmdJE},
+                                                            {"JNE", cmdJNE},
+                                                            {"PUSH", cmdPUSH}};
+
+const char* reg_name_arr[NUMBEROFREGS] = {"AX", "BX", "CX",
+                                          "DX", "EX", "FX",
+                                          "GX"};
+
 int ReadCmdFromBinFile(struct Buffer* buffer)
 {
     if (buffer == NULL){

@@ -5,13 +5,26 @@ const int CODEARROFFSET = 2;
 
 struct SPU
 {
-    size_t cp;
+    int pc;
     struct Stack stk;
     struct Buffer buffer;
     int regs[NUMBEROFREGS];
+    int err_code;
+};
+
+enum SPUErr
+{
+    none_err = 0,
+    mask_err = 1,
+    version_err = 2,
+    code_arr_size_err = 4,
+    code_arr_ptr_err = 8,
+    pc_err = 16
 };
 
 void SkipLine(void);
+
+void PrintSPUErrors(int err_code);
 
 void In(struct Stack* stk);
 

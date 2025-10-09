@@ -10,13 +10,10 @@ int AssemWriteCmdInBinFile(struct Buffer* buffer);
 
 int AssemReadCmdFromFile(struct Buffer* buffer);
 
-void AssemEndProcessing();
-
-int AssemReadInStringBuffer(char* str_buffer);
-
-int CopyFromBufferToStrPtrArr(char* str_buffer, char** str_ptr_arr, size_t* lines);
+void AssemEndProcessing(struct Buffer* buffer);
 
 int EmitInArr(struct Buffer* buffer, int value);
 
+int GetRegIndex(char* str_with_reg);
 
 #endif
