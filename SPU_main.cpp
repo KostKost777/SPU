@@ -15,7 +15,7 @@ int main()
 
     SPUCtor(&spu);
 
-    if (ReadCmdFromBinFile(&(spu.buffer)) == 1)
+    if (SPUReadCmdFromFile(&spu) == 1)
         return 0;
 
     if (SPUVerifier(&spu) == 1)

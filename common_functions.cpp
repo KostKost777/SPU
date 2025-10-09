@@ -54,5 +54,7 @@ int ReadCmdFromBinFile(struct Buffer* buffer)
                          sizeof(int), CAPACITY,
                          bin_file);
 
+    fclose(bin_file);
+
     return 0;
 }

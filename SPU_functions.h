@@ -1,11 +1,11 @@
 #ifndef SPU_FUNCS
 #define SPU_FUNCS
 
-const int CODEARROFFSET = 2;
+const int TITLEOFFSET = 2;
 
 struct SPU
 {
-    int pc;
+    size_t pc;
     struct Stack stk;
     struct Buffer buffer;
     int regs[NUMBEROFREGS];
@@ -36,7 +36,7 @@ int SPUCtor(struct SPU* spu);
 
 int SPUVerifier(SPU* spu);
 
-int SPUReadCmdFromFile(struct Buffer* buffer);
+int SPUReadCmdFromFile(struct SPU* spu);
 
 int SPURunCmdFromBuffer(struct SPU* spu);
 

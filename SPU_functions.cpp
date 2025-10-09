@@ -14,9 +14,8 @@ int SPUCtor(SPU* spu)
     assert(spu != NULL);
 
     StackCtor(&spu->stk, CAPACITY);
-    spu->pc = CODEARROFFSET;
-    spu->buffer.size = CODEARROFFSET;
-    spu->buffer.code_arr = (int*)calloc(CAPACITY, sizeof(int));
+    spu->pc = 0;
+    spu->buffer.size = 0;
 
     return 0;
 }
@@ -25,24 +24,27 @@ int SPUVerifier(SPU* spu)
 {
     assert(spu != NULL);
 
-    if (spu->buffer.code_arr[0] != MASK) {
+    //printf("%d\n", spu->buffer.code_arr[0]);
+
+    if (spu->buffer.code_arr[-2] != MASK) {
         PRINT_LOGS("This byte code is not for this processor.");
         spu->err_code |= mask_err;
         return mask_err;
     }
 
-    if (spu->buffer.code_arr[1] != VERSION) {
+
+    if (spu->buffer.code_arr[-1] != VERSION) {
         PRINT_LOGS("This processor version is outdated, please recompile it.");
         spu->err_code |= version_err;
         return version_err;
     }
 
-    if (spu->buffer.size < 0 || spu->buffer.size >= CAPACITY) {
+    if (spu->buffer.size >= CAPACITY) {
         spu->err_code |= code_arr_size_err;
         return code_arr_size_err;
     }
 
-    if (spu->pc < 0 || spu->pc >= CAPACITY) {
+    if (spu->pc >= CAPACITY) {
         spu->err_code |= pc_err;
         return pc_err;
     }
@@ -57,47 +59,35 @@ int SPUVerifier(SPU* spu)
 
 void SPUDtor(SPU* spu)
 {
+    free(spu->buffer.code_arr - TITLEOFFSET);
     StackDtor(&spu->stk);
     fclose(log_file);
 }
 
-int SPUReadCmdFromFile(struct Buffer* buffer)
+int SPUReadCmdFromFile(struct SPU* spu)
 {
-    if (buffer == NULL){
+    if (spu == NULL){
         PRINT_LOGS("Buffer have NULL ptr");
         return 1;
     }
 
-    if (buffer->code_arr == NULL){
-        PRINT_LOGS("Array with commands have NULL ptr");
-        return 1;
-    }
-
-    FILE* bin_file = fopen("binfile.txt", "r");
+    FILE* bin_file = fopen("binfile.bin", "rb");
 
     if (bin_file == NULL) {
         PRINT_LOGS("The bin file did not open");
         return 1;
     }
 
-    while (true) {
+    int* cmd_buffer = (int*)calloc(CAPACITY, sizeof(int));
 
-        if (buffer->size >= CAPACITY){
-            PRINT_LOGS("Not enought memory in buffer, please increase capacity");
-            fclose(bin_file);
-            return 1;
-        }
+    assert(cmd_buffer != NULL);
 
-        //printf("%d\n", (*code_arr)[*size]);
+    spu->buffer.size = fread(cmd_buffer, sizeof(int), CAPACITY, bin_file);
 
-        if (fscanf(bin_file, "%d",
-                   &(buffer->code_arr[buffer->size])) == EOF)
-            break;
-
-        buffer->size++;
-    }
+    spu->buffer.code_arr = cmd_buffer + TITLEOFFSET;
 
     fclose(bin_file);
+
     return 0;
 }
 
@@ -195,7 +185,7 @@ void Jmp(struct SPU* spu, int arg)
 {
     assert(spu != NULL);
 
-    spu->pc = CODEARROFFSET + arg - 1;
+    spu->pc = arg - 1;
 }
 
 void Jb(struct SPU* spu, int arg)
@@ -205,7 +195,7 @@ void Jb(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 < elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc = arg - 1;
 }
 
 void Jbe(struct SPU* spu, int arg)
@@ -215,7 +205,7 @@ void Jbe(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 <= elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc = arg - 1;
 }
 
 void Ja(struct SPU* spu, int arg)
@@ -225,7 +215,7 @@ void Ja(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 > elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc =  arg - 1;
 }
 
 void Jae(struct SPU* spu, int arg)
@@ -235,7 +225,7 @@ void Jae(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 >= elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc =  arg - 1;
 }
 
 void Je(struct SPU* spu, int arg)
@@ -245,7 +235,7 @@ void Je(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 == elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc =  arg - 1;
 }
 
 void Jne(struct SPU* spu, int arg)
@@ -255,7 +245,7 @@ void Jne(struct SPU* spu, int arg)
     GET_TWO_ELEM(&spu->stk);
 
     if (elem2 != elem1)
-        spu->pc = CODEARROFFSET + arg - 1;
+        spu->pc =  arg - 1;
 }
 
 void In(struct Stack* stk)
@@ -266,7 +256,7 @@ void In(struct Stack* stk)
     printf("Enter number: ");
     while (scanf("%d", &value) != 1) {
         SkipLine();
-        printf("Wrong input\n");
+        printf("\nWrong input\n");
         printf("Enter number: ");
     }
 

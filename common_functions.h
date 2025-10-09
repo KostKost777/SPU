@@ -38,7 +38,7 @@ const int NUMOFNOARGFUNCS = 8;
 
 const size_t NUMBEROFREGS = 7; //AX, BX, CX, DX, EX, FX, GX
 
-const size_t CAPACITY = 1500;
+const int CAPACITY = 1500;
 
 struct Buffer
 {
