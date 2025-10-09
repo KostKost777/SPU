@@ -84,6 +84,8 @@ int SPUReadCmdFromFile(struct SPU* spu)
 
     spu->buffer.size = fread(cmd_buffer, sizeof(int), CAPACITY, bin_file);
 
+    spu->buffer.size -= TITLEOFFSET;
+
     spu->buffer.code_arr = cmd_buffer + TITLEOFFSET;
 
     fclose(bin_file);

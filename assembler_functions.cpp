@@ -12,7 +12,7 @@ extern FILE* log_file;
 extern const char* log_file_name;
 
 extern StructCmdWithName no_arg_funcs[NUMOFNOARGFUNCS];
-extern StructCmdWithName single_arg_funcs[NUMOFSINGLEARGFUNCS];
+extern StructCmdWithName single_arg_funcs[NUMOFJUMPFUNCS];
 extern const char* reg_name_arr[NUMBEROFREGS];
 
 int AssemPrintLogs(const char* message,
@@ -137,78 +137,118 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
 
     //printf("%d", lines);
 
-    for (size_t i = 0; i < Asmtext.number_of_lines; ++i) {
+    int labels[CAPACITY] = {};
 
-        bool check_correct_cmd = false;
+    const int NOLABLE = -1;
+    memset(labels, NOLABLE, CAPACITY * sizeof(int));
 
-        int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
-                            "%s", cmdStr);
+    int pc = 0;
 
-        //printf("NOW FUNC: %s\n", cmdStr);
+    for (int compile_iterator = 1; compile_iterator <= 2; compile_iterator++) {
 
-        if (status == EOF){
-            PRINT_LOGS("END OF FILE");
-            break;
-        }
+        source_file_line_now = 1;
+        buffer->size = 2;
+        pc = 0;
 
-        else if (status == 0) {
-            AssemPrintLogs("Invalid command", source_file_line_now,
-                                              source_file_name);
-            return 1;
-        }
+        for (size_t i = 0; i < Asmtext.number_of_lines; ++i) {
 
-        else if (status == 1) {
+            bool check_correct_cmd = false;
 
-            for (int index = 0; index < NUMOFNOARGFUNCS; ++index) {
-                if (strcmp(no_arg_funcs[index].name, cmdStr) == 0){
-                    //printf("cmd0: %s\n", no_arg_funcs[index].name);
-                    EmitInArr(buffer, no_arg_funcs[index].cmd);
-                    check_correct_cmd = true;
-                    break;
-                }
+            if (sscanf(Asmtext.poem_ptr_array[i].line_ptr, ":%d", &arg) == 1){
+
+                labels[arg] = pc;
+                continue;
             }
 
-            for (int index = 0; index < NUMOFSINGLEARGFUNCS; ++index) {
-                if (strcmp(single_arg_funcs[index].name, cmdStr) == 0 &&
-                    sscanf(Asmtext.poem_ptr_array[i].line_ptr,
-                    "%*s %d", &arg) == 1){
+            int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
+                                "%s", cmdStr);
 
-                    //printf("cmd1: %s\n", single_arg_funcs[index].name);
-                    EmitInArr(buffer, single_arg_funcs[index].cmd);
-                    EmitInArr(buffer, arg);
-                    check_correct_cmd = true;
-                    break;
-                }
+            printf("NOW FUNC: %s\n", cmdStr);
+            printf("STATUS: %d\n\n", status);
+
+            if (status == EOF){
+                PRINT_LOGS("END OF FILE");
+                break;
             }
 
-            if (strcmp(cmdStr, "PUSHREG") == 0 &&
-                    (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
-                     != -1) {
-
-                EmitInArr(buffer, cmdPUSHREG);
-                EmitInArr(buffer, reg_index);
-
-                check_correct_cmd = true;
-            }
-
-            else if (strcmp(cmdStr, "POPREG") == 0 &&
-                    (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
-                     != -1) {
-
-                EmitInArr(buffer, cmdPOPREG);
-                EmitInArr(buffer, reg_index);
-
-                check_correct_cmd = true;
-            }
-
-            if (check_correct_cmd == false){
+            else if (status == 0) {
                 AssemPrintLogs("Invalid command", source_file_line_now,
-                                                  source_file_name);
+                                                source_file_name);
                 return 1;
             }
-        }
 
-        source_file_line_now++;
+            else if (status == 1) {
+
+                for (int index = 0; index < NUMOFNOARGFUNCS; ++index) {
+                    if (strcmp(no_arg_funcs[index].name, cmdStr) == 0){
+                        //printf("cmd0: %s\n", no_arg_funcs[index].name);
+                        EmitInArr(buffer, no_arg_funcs[index].cmd);
+                        check_correct_cmd = true;
+                        pc++;
+                        break;
+                    }
+                }
+
+                for (int index = 0; index < NUMOFJUMPFUNCS; ++index) {
+                    if (strcmp(single_arg_funcs[index].name, cmdStr) == 0 &&
+                        sscanf(Asmtext.poem_ptr_array[i].line_ptr,
+                        "%*s :%d", &arg) == 1){
+                        printf("JMP ARG: %d\n", arg);
+                        pc+=2;
+
+                        if (labels[arg] != -1) {
+                            printf("LABAL EXIST: %d\n", labels[arg]);
+                            EmitInArr(buffer, single_arg_funcs[index].cmd);
+                            EmitInArr(buffer, labels[arg]);
+                        }
+
+                        check_correct_cmd = true;
+                        break;
+                        //printf("cmd1: %s\n", single_arg_funcs[index].name);
+                    }
+                }
+
+                if (strcmp(cmdStr, "PUSHREG") == 0 &&
+                        (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
+                        != -1) {
+
+                    EmitInArr(buffer, cmdPUSHREG);
+                    EmitInArr(buffer, reg_index);
+                    pc+=2;
+
+                    check_correct_cmd = true;
+                }
+
+                if (strcmp(cmdStr, "PUSH") == 0 &&
+                    sscanf(Asmtext.poem_ptr_array[i].line_ptr, "%*s %d", &arg) == 1) {
+
+                    EmitInArr(buffer, cmdPUSH);
+                    EmitInArr(buffer, arg);
+                    pc+=2;
+
+                    check_correct_cmd = true;
+                }
+
+                else if (strcmp(cmdStr, "POPREG") == 0 &&
+                        (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
+                        != -1) {
+
+                    EmitInArr(buffer, cmdPOPREG);
+                    EmitInArr(buffer, reg_index);
+                    pc+=2;
+
+                    check_correct_cmd = true;
+                }
+
+                if (check_correct_cmd == false){
+                    AssemPrintLogs("Invalid command", source_file_line_now,
+                                                      source_file_name);
+                    return 1;
+                }
+            }
+
+            source_file_line_now++;
+        }
     }
 
     return 0;
