@@ -1,12 +1,11 @@
 #ifndef SPU_FUNCS
 #define SPU_FUNCS
 
-const int TITLEOFFSET = 2;
-
 struct SPU
 {
     size_t pc;
     struct Stack stk;
+    struct Stack ret_stk;
     struct Buffer buffer;
     int regs[NUMBEROFREGS];
     int err_code;
@@ -21,6 +20,8 @@ enum SPUErr
     code_arr_ptr_err = 8,
     pc_err = 16
 };
+
+const int ACCURACY = 100;
 
 void SkipLine(void);
 
@@ -55,6 +56,10 @@ void Jae(struct SPU* spu, int arg);
 void Je(struct SPU* spu, int arg);
 
 void Jne(struct SPU* spu, int arg);
+
+void Call(struct SPU* spu, int arg);
+
+void Ret(struct SPU* spu);
 
 void PopReg(struct SPU* spu, int reg_index);
 

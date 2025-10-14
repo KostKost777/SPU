@@ -2,8 +2,8 @@ FLAGS=-Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal 
 NODEBUG = -g
 all: proc
 
-proc: SPU_main.o dump_functions.o stack_functions.o SPU_functions.o assembler_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o
-	g++ $(FLAGS) SPU_main.o dump_functions.o stack_functions.o SPU_functions.o assembler_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o -o proc
+proc: SPU_main.o dump_functions.o stack_functions.o SPU_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o
+	g++ $(FLAGS) SPU_main.o dump_functions.o stack_functions.o SPU_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o -o proc
 
 SPU_main.o: SPU_main.cpp
 	g++ $(FLAGS) -c SPU_main.cpp
@@ -22,9 +22,6 @@ stack_functions.o: stack_functions.cpp
 
 SPU_functions.o: SPU_functions.cpp
 	g++ $(FLAGS) -c SPU_functions.cpp
-
-assembler_functions.o: assembler_functions.cpp
-	g++ $(FLAGS) -c assembler_functions.cpp
 
 common_functions.o: common_functions.cpp
 	g++ $(FLAGS) -c common_functions.cpp

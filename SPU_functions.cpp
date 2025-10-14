@@ -14,6 +14,8 @@ int SPUCtor(SPU* spu)
     assert(spu != NULL);
 
     StackCtor(&spu->stk, CAPACITY);
+    StackCtor(&spu->ret_stk, CAPACITY);
+
     spu->pc = 0;
     spu->buffer.size = 0;
 
@@ -61,6 +63,7 @@ void SPUDtor(SPU* spu)
 {
     free(spu->buffer.code_arr - TITLEOFFSET);
     StackDtor(&spu->stk);
+    StackDtor(&spu->ret_stk);
     fclose(log_file);
 }
 
@@ -123,6 +126,12 @@ int SPURunCmdFromBuffer(struct SPU* spu)
                          break;
 
             case cmdIN: In(&spu->stk);
+                        break;
+
+            case cmdCALL: Call(spu, spu->buffer.code_arr[++spu->pc]);
+                          break;
+
+            case cmdRET: Ret(spu);
                          break;
 
             case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->pc]);
@@ -250,6 +259,26 @@ void Jne(struct SPU* spu, int arg)
         spu->pc =  arg - 1;
 }
 
+void Call(struct SPU* spu, int arg)
+{
+    assert(spu != NULL);
+
+    StackPush(&spu->ret_stk, spu->pc);
+
+    spu->pc =  arg - 1;
+}
+
+void Ret(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    int last_ret = 0;
+
+    StackPop(&spu->ret_stk, &last_ret);
+
+    spu->pc = last_ret;
+}
+
 void In(struct Stack* stk)
 {
     assert(stk != NULL);
@@ -329,7 +358,7 @@ void Out(Stack* stk)
 
 void SPUdump(struct SPU* spu)
 {
-    printf("--------------------------------------------------------\n");
+    printf("\n\n&&&&&&&&&&&&&&&&&&&&&&&&-DUMP-&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
 
     if (spu->err_code != 0)
         PrintSPUErrors(spu->err_code);
@@ -339,6 +368,7 @@ void SPUdump(struct SPU* spu)
     for (int i = CANARY_CONST; i < spu->stk.size; ++i) {
         printf("    *[%d] - %d\n", i, spu->stk.data[i]);
     }
+    printf("------------------------------------------------------\n");
 
     printf("CODE_ARR: \n");
 
@@ -352,13 +382,26 @@ void SPUdump(struct SPU* spu)
 
     printf("\n");
 
+    printf("------------------------------------------------------\n");
+
     printf("REGISTERS:\n");
     char reg_name = 'A';
     for (size_t i = 0; i < NUMBEROFREGS; ++i, reg_name++) {
         printf("[%cX]  -  [%d]\n", reg_name, spu->regs[i]);
     }
 
+    printf("------------------------------------------------------\n");
+
+    printf("RET_STACK: \n");
+    printf("SIZE: %d \n", spu->ret_stk.size);
+    for (int i = CANARY_CONST; i < spu->ret_stk.size; ++i) {
+        printf("    *[%d] - %d\n", i, spu->ret_stk.data[i]);
+    }
+    printf("------------------------------------------------------\n");
+
     printf("PC: %u\n", spu->pc);
+
+    printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n\n");
 }
 
 void PrintSPUErrors(int err_code)

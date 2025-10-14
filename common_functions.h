@@ -1,9 +1,11 @@
 #ifndef COMMON
 #define COMMON
 
-const int VERSION = 2;
+const int VERSION = 3;
 
 const int MASK = 1380077378; //BOBR
+
+const int TITLEOFFSET = 2;
 
 enum CmdCodes
 {
@@ -23,6 +25,8 @@ enum CmdCodes
     cmdJE = 13,
     cmdJNE = 14,
     cmdIN = 15,
+    cmdCALL = 16,
+    cmdRET = 17,
     cmdPUSHREG = 33,
     cmdPOPREG = 52
 };
@@ -32,9 +36,9 @@ struct StructCmdWithName {
     int cmd;
 };
 
-const int NUMOFSINGLEARGFUNCS = 8;
+const int NUMOFJUMPFUNCS = 8;
 
-const int NUMOFNOARGFUNCS = 8;
+const int NUMOFNOARGFUNCS = 9;
 
 const size_t NUMBEROFREGS = 7; //AX, BX, CX, DX, EX, FX, GX
 

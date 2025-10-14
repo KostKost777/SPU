@@ -1,17 +1,20 @@
 #include<TXLib.h>
 
-#include "assembler_functions.h"
 #include "dump_functions.h"
 #include "stack_functions.h"
 #include "common_functions.h"
 
 #include "MC_Onegin\read_poem_from_file_functions.h"
 
+#include "assembler_functions.h"
+
 extern StructCmdWithName no_arg_funcs[];
 extern StructCmdWithName single_arg_funcs[];
 extern const char* reg_name_arr[];
 
 const char* log_file_name = "logfile.txt";
+
+const char* source_file_name = "source.asm";
 
 FILE* log_file = fopen(log_file_name, "w");
 
