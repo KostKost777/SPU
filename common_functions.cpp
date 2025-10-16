@@ -9,28 +9,30 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
-StructCmdWithName no_arg_funcs[NUM_OF_NO_ARG_FUNCS] = { {"IN",    cmdIN},
-                                                    {"HLT",   cmdHLT},
-                                                    {"ADD",   cmdADD},
-                                                    {"SUB",   cmdSUB},
-                                                    {"DIV",   cmdDIV},
-                                                    {"OUT",   cmdOUT},
-                                                    {"MUL",   cmdMUL},
-                                                    {"SQVRT", cmdSQVRT},
-                                                    {"RET",   cmdRET}};
-
-StructCmdWithName single_arg_funcs[NUM_OF_JUMP_FUNCS] = { {"JMP",  cmdJMP},
-                                                       {"JB",   cmdJB},
-                                                       {"JBE",  cmdJBE},
-                                                       {"JA",   cmdJA},
-                                                       {"JAE",  cmdJAE},
-                                                       {"JE",   cmdJE},
-                                                       {"JNE",  cmdJNE},
-                                                       {"CALL", cmdCALL}};
+StructCmd all_cmd[NUM_OF_CMDS] = {  {"IN",          cmdIN,           0},
+                                    {"HLT",         cmdHLT,          0},
+                                    {"ADD",         cmdADD,          0},
+                                    {"SUB",         cmdSUB,          0},
+                                    {"DIV",         cmdDIV,          0},
+                                    {"OUT",         cmdOUT,          0},
+                                    {"MUL",         cmdMUL,          0},
+                                    {"SQVRT",       cmdSQVRT,        0},
+                                    {"RET",         cmdRET,          0},
+                                    {"JMP",         cmdJMP,          1},
+                                    {"JB",          cmdJB,           1},
+                                    {"JBE",         cmdJBE,          1},
+                                    {"JA",          cmdJA,           1},
+                                    {"JAE",         cmdJAE,          1},
+                                    {"JE",          cmdJE,           1},
+                                    {"JNE",         cmdJNE,          1},
+                                    {"CALL",        cmdCALL,         1},
+                                    {"PUSH",        cmdPUSH,         1},
+                                    {"PUSHREG",     cmdPUSHREG,      1},
+                                    {"POPREG",      cmdPOPREG,       1}};
 
 const char* reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
-                                          "DX", "EX", "FX",
-                                          "GX"};
+                                            "DX", "EX", "FX",
+                                            "GX"};
 
 int ReadCmdFromBinFile(struct Buffer* buffer)
 {

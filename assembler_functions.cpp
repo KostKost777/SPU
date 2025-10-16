@@ -14,19 +14,15 @@ extern FILE* lst_file;
 extern const char* log_file_name;
 extern const char* source_file_name;
 
-extern StructCmdWithName no_arg_funcs[NUM_OF_NO_ARG_FUNCS];
-extern StructCmdWithName single_arg_funcs[NUM_OF_JUMP_FUNCS];
+extern StructCmd all_cmd[NUM_OF_CMDS];
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
 int AssemPrintLogs(const char* message, size_t line)
 {
+    assert(message != NULL);
+
     if (log_file == NULL) {
         PRINT_LOGS("The log file did not open");
-        return 1;
-    }
-
-    if (message == NULL) {
-        PRINT_LOGS("NULL pointer to messages");
         return 1;
     }
 
@@ -46,15 +42,8 @@ int AssemPrintLogs(const char* message, size_t line)
 int AssemWriteCmdInFile(struct Buffer* buffer)
 {
 
-    if (buffer == NULL){
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
-
-    if (buffer->code_arr == NULL){
-        PRINT_LOGS("Array with commands have NULL ptr");
-        return 1;
-    }
+    assert(buffer != NULL);
+    assert(buffer->code_arr != NULL);
 
     FILE* bin_file = fopen("binfile.txt", "w");
 
@@ -73,15 +62,8 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
 
 int AssemWriteCmdInBinFile(struct Buffer* buffer)
 {
-    if (buffer == NULL) {
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
-
-    if (buffer->code_arr == NULL) {
-        PRINT_LOGS("Array with commands have NULL ptr");
-        return 1;
-    }
+    assert(buffer != NULL);
+    assert(buffer->code_arr != NULL);
 
     FILE* bin_file = fopen("binfile.bin", "wb");
 
@@ -102,20 +84,14 @@ void AssemEndProcessing(struct Buffer* buffer)
     free(buffer->code_arr);
     buffer->code_arr = NULL;
     fclose(log_file);
+    fclose(lst_file);
 }
 
 int AssemReadCmdFromFile(struct Buffer* buffer)
 {
 
-    if (buffer == NULL){
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
-
-    if (buffer->code_arr == NULL){
-        PRINT_LOGS("Array with commands have NULL ptr");
-        return 1;
-    }
+    assert(buffer != NULL);
+    assert(buffer->code_arr != NULL);
 
     Struct_Poem Asmtext = {};
 
@@ -155,6 +131,29 @@ int EmitInArr(struct Buffer* buffer, int value)
     return 0;
 }
 
+int TryRegFunctions(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
+{
+    assert(buffer != NULL);
+    assert(str_with_arg != NULL);
+    assert(pc != NULL);
+
+    int registr = GetRegIndex(str_with_arg);
+
+    if (registr == -1) return 0;
+
+    EmitInArr(buffer, cmd_struct.cmd);
+    EmitInArr(buffer, registr);
+    *pc+=2;
+
+    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s %cX\n",
+                       buffer->size - HEADER_OFFSET,
+                       cmd_struct.cmd, registr,
+                       cmd_struct.name, registr + 'A');
+
+    return 1;
+}
+
 int GetRegIndex(char* str_with_reg)
 {
     assert(str_with_reg != NULL);
@@ -177,6 +176,73 @@ int GetRegIndex(char* str_with_reg)
     return -1;
 }
 
+int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, int labels[], StructCmd cmd_struct)
+{
+    assert(buffer != NULL);
+    assert(str_with_arg != NULL);
+    assert(labels != NULL);
+    assert(pc != NULL);
+
+    int arg = 0;
+
+    if (sscanf(str_with_arg, "%*s :%d", &arg) == 0)
+        return 0;
+
+    *pc+=2;
+
+    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
+                       buffer->size - HEADER_OFFSET,
+                       cmd_struct.cmd, labels[arg],
+                       cmd_struct.name);
+
+    EmitInArr(buffer, cmd_struct.cmd);
+    EmitInArr(buffer, labels[arg]);
+
+    return 1;
+}
+
+int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
+{
+    assert(buffer != NULL);
+    assert(str_with_arg != NULL);
+    assert(pc != NULL);
+
+    int arg = 0;
+
+    if (sscanf(str_with_arg, "%*s %d", &arg) == 0)
+        return 0;
+
+    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
+                       buffer->size - HEADER_OFFSET,
+                       cmd_struct.cmd, arg, cmd_struct.name);
+
+    EmitInArr(buffer, cmd_struct.cmd);
+    EmitInArr(buffer, arg);
+
+    *pc+=2;
+
+    return 1;
+}
+
+int TryNoArgFunctions(struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
+{
+    if (cmd_struct.have_arg == true)
+        return 0;
+
+    EmitInArr(buffer, cmd_struct.cmd);
+
+    fprintf(lst_file, "[%3u]   |  %3d      |  %s\n",
+                    buffer->size - HEADER_OFFSET,
+                    cmd_struct.cmd, cmd_struct.name);
+
+    *pc+=1;
+
+    return 1;
+}
+
 int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
                           int labels[CAPACITY])
 {
@@ -188,16 +254,15 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
 
     int arg = 0;
     int pc = 0;
-    int reg_index = 0;
     int source_file_line_now = 1;
 
-    buffer->size = TITLE_OFFSET;
+    buffer->size = HEADER_OFFSET;
 
     for (size_t i = 0; i < Asmtext.number_of_lines; ++i) {
 
         bool check_correct_cmd = false;
 
-        if (sscanf(Asmtext.poem_ptr_array[i].line_ptr, ":%d", &arg) == 1){
+        if (sscanf(Asmtext.poem_ptr_array[i].line_ptr, " :%d", &arg) == 1){
 
             // printf("ARG: :%d\n", arg);
             labels[arg] = pc;
@@ -221,83 +286,29 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
             return 1;
         }
 
-        for (int index = 0; index < NUM_OF_NO_ARG_FUNCS; ++index) {
-            if (strcmp(no_arg_funcs[index].name, cmdStr) == 0){
-                //printf("cmd0: %s\n", no_arg_funcs[index].name);
+        for (int index = 0; index < NUM_OF_CMDS; ++index) {
 
-                fprintf(lst_file, "[%3u]   |  %3d      |  %s\n",
-                                    i, no_arg_funcs[index].cmd,
-                                    cmdStr);
+            if (strcmp(all_cmd[index].name, cmdStr) == 0) {
 
-                EmitInArr(buffer, no_arg_funcs[index].cmd);
-                check_correct_cmd = true;
-                pc++;
-                break;
+                if (TryNoArgFunctions(buffer, &pc, all_cmd[index]))
+                    check_correct_cmd = true;
+
+                else if (TryRegFunctions(Asmtext.poem_ptr_array[i].line_ptr,
+                                        buffer, &pc, all_cmd[index]))
+                    check_correct_cmd = true;
+
+                else if (TryPushFunction(Asmtext.poem_ptr_array[i].line_ptr,
+                                            buffer, &pc,
+                                            all_cmd[index]))
+                    check_correct_cmd = true;
+
+                else if (TryJumpFunctions(Asmtext.poem_ptr_array[i].line_ptr,
+                                            buffer, &pc, labels,
+                                            all_cmd[index]))
+                        check_correct_cmd = true;
+
+                if (check_correct_cmd) break;
             }
-        }
-
-        for (int index = 0; index < NUM_OF_JUMP_FUNCS; ++index) {
-            if (strcmp(single_arg_funcs[index].name, cmdStr) == 0 &&
-                sscanf(Asmtext.poem_ptr_array[i].line_ptr,
-                "%*s :%d", &arg) == 1){
-                //printf("JMP ARG: %d\n", arg);
-                pc+=2;
-
-                fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
-                                    i, single_arg_funcs[index].cmd,
-                                    labels[arg], cmdStr);
-
-                if (labels[arg] != -1) {
-                    //printf("LABAL EXIST: %d\n", labels[arg]);
-                    EmitInArr(buffer, single_arg_funcs[index].cmd);
-                    EmitInArr(buffer, labels[arg]);
-                }
-
-                check_correct_cmd = true;
-                break;
-                //printf("cmd1: %s\n", single_arg_funcs[index].name);
-            }
-        }
-
-        if (strcmp(cmdStr, "PUSHREG") == 0 &&
-                (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
-                != -1) {
-
-            fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s %cX\n",
-                               i, cmdPUSHREG, reg_index, cmdStr, reg_index + 'A');
-
-            EmitInArr(buffer, cmdPUSHREG);
-            EmitInArr(buffer, reg_index);
-            pc+=2;
-
-            check_correct_cmd = true;
-        }
-
-        else if (strcmp(cmdStr, "PUSH") == 0 &&
-            sscanf(Asmtext.poem_ptr_array[i].line_ptr, "%*s %d", &arg) == 1) {
-
-            fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
-                                 i, cmdPUSH, arg, cmdStr);
-
-            EmitInArr(buffer, cmdPUSH);
-            EmitInArr(buffer, arg);
-            pc+=2;
-
-            check_correct_cmd = true;
-        }
-
-        else if (strcmp(cmdStr, "POPREG") == 0 &&
-                (reg_index = GetRegIndex(Asmtext.poem_ptr_array[i].line_ptr))
-                != -1) {
-
-            fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s %cX\n",
-                                i, cmdPOPREG, reg_index, cmdStr, reg_index + 'A');
-
-            EmitInArr(buffer, cmdPOPREG);
-            EmitInArr(buffer, reg_index);
-            pc+=2;
-
-            check_correct_cmd = true;
         }
 
         if (check_correct_cmd == false){

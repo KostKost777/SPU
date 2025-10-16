@@ -5,7 +5,7 @@ const int VERSION = 3;
 
 const int SIGNATURE = 1380077378; //BOBR
 
-const int TITLE_OFFSET = 2;
+const int HEADER_OFFSET = 2;
 
 enum CmdCodes
 {
@@ -31,14 +31,13 @@ enum CmdCodes
     cmdPOPREG = 52
 };
 
-struct StructCmdWithName {
+struct StructCmd {
     const char* name;
     int cmd;
+    bool have_arg;
 };
 
-const int NUM_OF_JUMP_FUNCS = 8;
-
-const int NUM_OF_NO_ARG_FUNCS = 9;
+const int NUM_OF_CMDS = 20;
 
 const size_t NUMBER_OF_REGS = 7; //AX, BX, CX, DX, EX, FX, GX
 
