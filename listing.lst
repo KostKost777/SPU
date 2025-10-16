@@ -1,0 +1,42 @@
+[  0]   |   15      |  IN
+[  1]   |   52   0  |  POPREG AX
+[  2]   |   16  -1  |  CALL
+[  3]   |    5      |  OUT
+[  4]   |    0      |  HLT
+[  6]   |   33   0  |  PUSHREG AX
+[  7]   |    1   1  |  PUSH
+[  8]   |   11  -1  |  JA
+[  9]   |    1   1  |  PUSH
+[ 10]   |   17      |  RET
+[ 12]   |   33   0  |  PUSHREG AX
+[ 13]   |   33   0  |  PUSHREG AX
+[ 14]   |    1   1  |  PUSH
+[ 15]   |    3      |  SUB
+[ 16]   |   52   0  |  POPREG AX
+[ 17]   |   16   7  |  CALL
+[ 18]   |   52   1  |  POPREG BX
+[ 19]   |   33   1  |  PUSHREG BX
+[ 20]   |    6      |  MUL
+[ 21]   |   17      |  RET
+
+[  0]   |   15      |  IN
+[  1]   |   52   0  |  POPREG AX
+[  2]   |   16   7  |  CALL
+[  3]   |    5      |  OUT
+[  4]   |    0      |  HLT
+[  6]   |   33   0  |  PUSHREG AX
+[  7]   |    1   1  |  PUSH
+[  8]   |   11  16  |  JA
+[  9]   |    1   1  |  PUSH
+[ 10]   |   17      |  RET
+[ 12]   |   33   0  |  PUSHREG AX
+[ 13]   |   33   0  |  PUSHREG AX
+[ 14]   |    1   1  |  PUSH
+[ 15]   |    3      |  SUB
+[ 16]   |   52   0  |  POPREG AX
+[ 17]   |   16   7  |  CALL
+[ 18]   |   52   1  |  POPREG BX
+[ 19]   |   33   1  |  PUSHREG BX
+[ 20]   |    6      |  MUL
+[ 21]   |   17      |  RET
+

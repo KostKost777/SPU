@@ -8,15 +8,12 @@
 
 #include "assembler_functions.h"
 
-extern StructCmdWithName no_arg_funcs[];
-extern StructCmdWithName single_arg_funcs[];
-extern const char* reg_name_arr[];
-
 const char* log_file_name = "logfile.txt";
-
+const char* listing_file_name = "listing.lst";
 const char* source_file_name = "source.asm";
 
 FILE* log_file = fopen(log_file_name, "w");
+FILE* lst_file = fopen(listing_file_name, "w");
 
 int main()
 {

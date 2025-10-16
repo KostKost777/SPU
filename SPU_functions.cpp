@@ -28,7 +28,7 @@ int SPUVerifier(SPU* spu)
 
     //printf("%d\n", spu->buffer.code_arr[0]);
 
-    if (spu->buffer.code_arr[-2] != MASK) {
+    if (spu->buffer.code_arr[-2] != SIGNATURE) {
         PRINT_LOGS("This byte code is not for this processor.");
         spu->err_code |= mask_err;
         return mask_err;
@@ -61,7 +61,7 @@ int SPUVerifier(SPU* spu)
 
 void SPUDtor(SPU* spu)
 {
-    free(spu->buffer.code_arr - TITLEOFFSET);
+    free(spu->buffer.code_arr - TITLE_OFFSET);
     StackDtor(&spu->stk);
     StackDtor(&spu->ret_stk);
     fclose(log_file);
@@ -87,9 +87,9 @@ int SPUReadCmdFromFile(struct SPU* spu)
 
     spu->buffer.size = fread(cmd_buffer, sizeof(int), CAPACITY, bin_file);
 
-    spu->buffer.size -= TITLEOFFSET;
+    spu->buffer.size -= TITLE_OFFSET;
 
-    spu->buffer.code_arr = cmd_buffer + TITLEOFFSET;
+    spu->buffer.code_arr = cmd_buffer + TITLE_OFFSET;
 
     fclose(bin_file);
 
@@ -98,10 +98,11 @@ int SPUReadCmdFromFile(struct SPU* spu)
 
 int SPURunCmdFromBuffer(struct SPU* spu)
 {
+    SPUVerifier(spu);
     for (; spu->pc < spu->buffer.size; ++(spu->pc)) {
 
-         SPUdump(spu);
-         getchar();
+        // SPUdump(spu);
+        // getchar();
 
         switch(spu->buffer.code_arr[spu->pc])
         {
@@ -167,6 +168,7 @@ int SPURunCmdFromBuffer(struct SPU* spu)
             default: PRINT_LOGS("Invalid command");
                      return 1;
         }
+        SPUVerifier(spu);
     }
     return 0;
 }
@@ -386,7 +388,7 @@ void SPUdump(struct SPU* spu)
 
     printf("REGISTERS:\n");
     char reg_name = 'A';
-    for (size_t i = 0; i < NUMBEROFREGS; ++i, reg_name++) {
+    for (size_t i = 0; i < NUMBER_OF_REGS; ++i, reg_name++) {
         printf("[%cX]  -  [%d]\n", reg_name, spu->regs[i]);
     }
 

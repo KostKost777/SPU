@@ -9,7 +9,7 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
-StructCmdWithName no_arg_funcs[NUMOFNOARGFUNCS] = { {"IN",    cmdIN},
+StructCmdWithName no_arg_funcs[NUM_OF_NO_ARG_FUNCS] = { {"IN",    cmdIN},
                                                     {"HLT",   cmdHLT},
                                                     {"ADD",   cmdADD},
                                                     {"SUB",   cmdSUB},
@@ -19,7 +19,7 @@ StructCmdWithName no_arg_funcs[NUMOFNOARGFUNCS] = { {"IN",    cmdIN},
                                                     {"SQVRT", cmdSQVRT},
                                                     {"RET",   cmdRET}};
 
-StructCmdWithName single_arg_funcs[NUMOFJUMPFUNCS] = { {"JMP",  cmdJMP},
+StructCmdWithName single_arg_funcs[NUM_OF_JUMP_FUNCS] = { {"JMP",  cmdJMP},
                                                        {"JB",   cmdJB},
                                                        {"JBE",  cmdJBE},
                                                        {"JA",   cmdJA},
@@ -28,7 +28,7 @@ StructCmdWithName single_arg_funcs[NUMOFJUMPFUNCS] = { {"JMP",  cmdJMP},
                                                        {"JNE",  cmdJNE},
                                                        {"CALL", cmdCALL}};
 
-const char* reg_name_arr[NUMBEROFREGS] = {"AX", "BX", "CX",
+const char* reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
                                           "DX", "EX", "FX",
                                           "GX"};
 

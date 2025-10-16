@@ -3,9 +3,9 @@
 
 const int VERSION = 3;
 
-const int MASK = 1380077378; //BOBR
+const int SIGNATURE = 1380077378; //BOBR
 
-const int TITLEOFFSET = 2;
+const int TITLE_OFFSET = 2;
 
 enum CmdCodes
 {
@@ -36,11 +36,11 @@ struct StructCmdWithName {
     int cmd;
 };
 
-const int NUMOFJUMPFUNCS = 8;
+const int NUM_OF_JUMP_FUNCS = 8;
 
-const int NUMOFNOARGFUNCS = 9;
+const int NUM_OF_NO_ARG_FUNCS = 9;
 
-const size_t NUMBEROFREGS = 7; //AX, BX, CX, DX, EX, FX, GX
+const size_t NUMBER_OF_REGS = 7; //AX, BX, CX, DX, EX, FX, GX
 
 const int CAPACITY = 1500;
 

@@ -7,7 +7,7 @@ struct SPU
     struct Stack stk;
     struct Stack ret_stk;
     struct Buffer buffer;
-    int regs[NUMBEROFREGS];
+    int regs[NUMBER_OF_REGS];
     int err_code;
 };
 
