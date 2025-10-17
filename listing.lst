@@ -1,328 +1,162 @@
-[  1]   |   15      |  IN
+[  0]   |    1  50  |  PUSH
+[  1]   |   52   3  |  POPREG DX
+[  2]   |    1  -1  |  PUSH
 [  3]   |   52   0  |  POPREG AX
-[  4]   |   15      |  IN
-[  6]   |   52   1  |  POPREG BX
-[  7]   |   15      |  IN
-[  9]   |   52   2  |  POPREG CX
-[ 11]   |   33   0  |  PUSHREG AX
-[ 11]   |    1   0  |  PUSH
-[ 13]   |   13  -1  |  JE
-[ 15]   |    1   0  |  PUSH
-[ 19]   |   33   1  |  PUSHREG BX
-[ 19]   |   13  -1  |  JE
-[ 23]   |   33   2  |  PUSHREG CX
-[ 23]   |    1   0  |  PUSH
-[ 25]   |   13  -1  |  JE
-[ 29]   |   33   1  |  PUSHREG BX
+[  4]   |    1  10  |  PUSH
+[  5]   |   52   6  |  POPREG GX
+[  6]   |   16  -1  |  CALL
+[  8]   |   33   0  |  PUSHREG AX
+[  9]   |    1   1  |  PUSH
+[ 10]   |    2      |  ADD
+[ 11]   |   52   0  |  POPREG AX
+[ 12]   |   16  -1  |  CALL
+[ 13]   |    1   1  |  PUSH
+[ 14]   |   14  -1  |  JNE
+[ 15]   |   16  -1  |  CALL
+[ 16]   |    1 -49  |  PUSH
+[ 17]   |   19   7  |  POPM HX
+[ 18]   |   20      |  DRAW
+[ 20]   |   16  -1  |  CALL
+[ 21]   |   33   0  |  PUSHREG AX
+[ 22]   |   33   3  |  PUSHREG DX
+[ 23]   |   33   3  |  PUSHREG DX
+[ 24]   |    6      |  MUL
+[ 25]   |    9  14  |  JB
+[ 26]   |    0      |  HLT
+[ 28]   |   33   1  |  PUSHREG BX
+[ 29]   |   33   4  |  PUSHREG EX
+[ 30]   |    3      |  SUB
 [ 31]   |   33   1  |  PUSHREG BX
-[ 32]   |    6      |  MUL
-[ 34]   |   33   0  |  PUSHREG AX
-[ 36]   |   33   2  |  PUSHREG CX
-[ 36]   |    1   4  |  PUSH
-[ 39]   |    6      |  MUL
-[ 40]   |    6      |  MUL
-[ 41]   |    3      |  SUB
-[ 43]   |   52   3  |  POPREG DX
-[ 45]   |   33   3  |  PUSHREG DX
-[ 45]   |    1   0  |  PUSH
-[ 47]   |    9  -1  |  JB
-[ 51]   |   33   3  |  PUSHREG DX
-[ 51]   |    1   0  |  PUSH
-[ 53]   |   13  -1  |  JE
-[ 57]   |   33   1  |  PUSHREG BX
-[ 57]   |    1  -1  |  PUSH
-[ 60]   |    6      |  MUL
-[ 62]   |   33   3  |  PUSHREG DX
-[ 63]   |    7      |  SQVRT
-[ 64]   |    2      |  ADD
-[ 64]   |    1   2  |  PUSH
-[ 67]   |    4      |  DIV
-[ 69]   |   33   0  |  PUSHREG AX
-[ 70]   |    4      |  DIV
-[ 72]   |   52   4  |  POPREG EX
-[ 74]   |   33   1  |  PUSHREG BX
-[ 74]   |    1  -1  |  PUSH
-[ 77]   |    6      |  MUL
-[ 79]   |   33   3  |  PUSHREG DX
-[ 80]   |    7      |  SQVRT
-[ 81]   |    3      |  SUB
-[ 81]   |    1   2  |  PUSH
-[ 84]   |    4      |  DIV
-[ 86]   |   33   0  |  PUSHREG AX
-[ 87]   |    4      |  DIV
-[ 89]   |   52   5  |  POPREG FX
-[ 89]   |    1   2  |  PUSH
-[ 93]   |   52   6  |  POPREG GX
-[ 95]   |   33   6  |  PUSHREG GX
-[ 96]   |    5      |  OUT
-[ 98]   |   33   4  |  PUSHREG EX
-[ 99]   |    5      |  OUT
-[101]   |   33   5  |  PUSHREG FX
-[102]   |    5      |  OUT
-[103]   |    0      |  HLT
-[105]   |   33   1  |  PUSHREG BX
-[107]   |   33   0  |  PUSHREG AX
-[108]   |    4      |  DIV
-[108]   |    1  -1  |  PUSH
-[111]   |    6      |  MUL
-[111]   |    1   2  |  PUSH
-[114]   |    4      |  DIV
-[116]   |   52   4  |  POPREG EX
-[116]   |    1   1  |  PUSH
-[120]   |   52   6  |  POPREG GX
-[122]   |   33   6  |  PUSHREG GX
-[123]   |    5      |  OUT
-[125]   |   33   4  |  PUSHREG EX
-[126]   |    5      |  OUT
-[127]   |    0      |  HLT
-[127]   |    1   0  |  PUSH
-[130]   |    5      |  OUT
-[131]   |    0      |  HLT
-[131]   |    1   0  |  PUSH
-[135]   |   52   4  |  POPREG EX
-[135]   |    1   2  |  PUSH
-[139]   |   52   6  |  POPREG GX
-[141]   |   33   1  |  PUSHREG BX
-[143]   |   33   0  |  PUSHREG AX
-[144]   |    4      |  DIV
-[144]   |    1  -1  |  PUSH
-[147]   |    6      |  MUL
-[149]   |   52   5  |  POPREG FX
-[151]   |   33   6  |  PUSHREG GX
-[152]   |    5      |  OUT
-[154]   |   33   4  |  PUSHREG EX
-[155]   |    5      |  OUT
-[157]   |   33   5  |  PUSHREG FX
-[158]   |    5      |  OUT
-[159]   |    0      |  HLT
-[161]   |   33   1  |  PUSHREG BX
-[161]   |    1   0  |  PUSH
-[163]   |   13  -1  |  JE
-[167]   |   33   2  |  PUSHREG CX
-[167]   |    1   0  |  PUSH
-[169]   |   13  -1  |  JE
-[173]   |   33   2  |  PUSHREG CX
-[173]   |    1  -1  |  PUSH
-[176]   |    6      |  MUL
-[178]   |   33   1  |  PUSHREG BX
-[179]   |    4      |  DIV
-[181]   |   52   4  |  POPREG EX
-[181]   |    1   1  |  PUSH
-[185]   |   52   6  |  POPREG GX
-[187]   |   33   6  |  PUSHREG GX
-[188]   |    5      |  OUT
-[190]   |   33   4  |  PUSHREG EX
-[191]   |    5      |  OUT
-[192]   |    0      |  HLT
-[194]   |   33   2  |  PUSHREG CX
-[194]   |    1   0  |  PUSH
-[196]   |   13  -1  |  JE
-[200]   |   33   2  |  PUSHREG CX
-[202]   |   33   0  |  PUSHREG AX
-[203]   |    4      |  DIV
-[203]   |    1  -1  |  PUSH
-[206]   |    6      |  MUL
-[208]   |   52   3  |  POPREG DX
-[210]   |   33   3  |  PUSHREG DX
-[210]   |    1   0  |  PUSH
-[212]   |    9  -1  |  JB
-[216]   |   33   3  |  PUSHREG DX
-[217]   |    7      |  SQVRT
-[219]   |   52   4  |  POPREG EX
-[221]   |   33   4  |  PUSHREG EX
-[221]   |    1  -1  |  PUSH
-[224]   |    6      |  MUL
-[226]   |   52   5  |  POPREG FX
-[228]   |   33   5  |  PUSHREG FX
-[230]   |   33   4  |  PUSHREG EX
-[230]   |    1   2  |  PUSH
-[234]   |   52   6  |  POPREG GX
-[236]   |   33   6  |  PUSHREG GX
-[237]   |    5      |  OUT
-[239]   |   33   4  |  PUSHREG EX
-[240]   |    5      |  OUT
-[242]   |   33   5  |  PUSHREG FX
-[243]   |    5      |  OUT
-[244]   |    0      |  HLT
-[246]   |   33   2  |  PUSHREG CX
-[246]   |    1   0  |  PUSH
-[248]   |   13  -1  |  JE
-[250]   |    1   0  |  PUSH
-[253]   |    5      |  OUT
-[254]   |    0      |  HLT
-[254]   |    1   1  |  PUSH
-[257]   |    5      |  OUT
-[257]   |    1   0  |  PUSH
-[260]   |    5      |  OUT
-[261]   |    0      |  HLT
-[261]   |    1  -1  |  PUSH
-[264]   |    5      |  OUT
-[265]   |    0      |  HLT
-[265]   |    1   0  |  PUSH
-[268]   |    5      |  OUT
-[269]   |    0      |  HLT
+[ 32]   |   33   4  |  PUSHREG EX
+[ 33]   |    3      |  SUB
+[ 34]   |    6      |  MUL
+[ 35]   |   33   2  |  PUSHREG CX
+[ 36]   |   33   5  |  PUSHREG FX
+[ 37]   |    3      |  SUB
+[ 38]   |   33   2  |  PUSHREG CX
+[ 39]   |   33   5  |  PUSHREG FX
+[ 40]   |    3      |  SUB
+[ 41]   |    6      |  MUL
+[ 42]   |    2      |  ADD
+[ 43]   |    7      |  SQVRT
+[ 44]   |   33   6  |  PUSHREG GX
+[ 45]   |   10  -1  |  JBE
+[ 46]   |    1   0  |  PUSH
+[ 47]   |   17      |  RET
+[ 49]   |    1   1  |  PUSH
+[ 50]   |   17      |  RET
+[ 52]   |   33   3  |  PUSHREG DX
+[ 53]   |    1   2  |  PUSH
+[ 54]   |    4      |  DIV
+[ 55]   |   52   4  |  POPREG EX
+[ 56]   |   33   3  |  PUSHREG DX
+[ 57]   |    1   2  |  PUSH
+[ 58]   |    4      |  DIV
+[ 59]   |   52   5  |  POPREG FX
+[ 60]   |   17      |  RET
+[ 62]   |   33   2  |  PUSHREG CX
+[ 63]   |   33   3  |  PUSHREG DX
+[ 64]   |    6      |  MUL
+[ 65]   |   33   1  |  PUSHREG BX
+[ 66]   |    2      |  ADD
+[ 67]   |   52   7  |  POPREG HX
+[ 68]   |   17      |  RET
+[ 70]   |   33   1  |  PUSHREG BX
+[ 71]   |    1   1  |  PUSH
+[ 72]   |    2      |  ADD
+[ 73]   |   52   1  |  POPREG BX
+[ 74]   |   16  -1  |  CALL
+[ 75]   |   17      |  RET
+[ 77]   |   33   1  |  PUSHREG BX
+[ 78]   |   33   3  |  PUSHREG DX
+[ 79]   |   13  -1  |  JE
+[ 80]   |   17      |  RET
+[ 82]   |    1   0  |  PUSH
+[ 83]   |   52   1  |  POPREG BX
+[ 84]   |    1   1  |  PUSH
+[ 85]   |   33   2  |  PUSHREG CX
+[ 86]   |    2      |  ADD
+[ 87]   |   52   2  |  POPREG CX
+[ 88]   |   17      |  RET
 
-[  1]   |   15      |  IN
+[  0]   |    1  50  |  PUSH
+[  1]   |   52   3  |  POPREG DX
+[  2]   |    1  -1  |  PUSH
 [  3]   |   52   0  |  POPREG AX
-[  4]   |   15      |  IN
-[  6]   |   52   1  |  POPREG BX
-[  7]   |   15      |  IN
-[  9]   |   52   2  |  POPREG CX
-[ 11]   |   33   0  |  PUSHREG AX
-[ 11]   |    1   0  |  PUSH
-[ 13]   |   13 159  |  JE
-[ 15]   |    1   0  |  PUSH
-[ 19]   |   33   1  |  PUSHREG BX
-[ 19]   |   13 192  |  JE
-[ 23]   |   33   2  |  PUSHREG CX
-[ 23]   |    1   0  |  PUSH
-[ 25]   |   13 131  |  JE
-[ 29]   |   33   1  |  PUSHREG BX
+[  4]   |    1  10  |  PUSH
+[  5]   |   52   6  |  POPREG GX
+[  6]   |   16  80  |  CALL
+[  8]   |   33   0  |  PUSHREG AX
+[  9]   |    1   1  |  PUSH
+[ 10]   |    2      |  ADD
+[ 11]   |   52   0  |  POPREG AX
+[ 12]   |   16  46  |  CALL
+[ 13]   |    1   1  |  PUSH
+[ 14]   |   14  34  |  JNE
+[ 15]   |   16  95  |  CALL
+[ 16]   |    1 -49  |  PUSH
+[ 17]   |   19   7  |  POPM HX
+[ 18]   |   20      |  DRAW
+[ 20]   |   16 106  |  CALL
+[ 21]   |   33   0  |  PUSHREG AX
+[ 22]   |   33   3  |  PUSHREG DX
+[ 23]   |   33   3  |  PUSHREG DX
+[ 24]   |    6      |  MUL
+[ 25]   |    9  14  |  JB
+[ 26]   |    0      |  HLT
+[ 28]   |   33   1  |  PUSHREG BX
+[ 29]   |   33   4  |  PUSHREG EX
+[ 30]   |    3      |  SUB
 [ 31]   |   33   1  |  PUSHREG BX
-[ 32]   |    6      |  MUL
-[ 34]   |   33   0  |  PUSHREG AX
-[ 36]   |   33   2  |  PUSHREG CX
-[ 36]   |    1   4  |  PUSH
-[ 39]   |    6      |  MUL
-[ 40]   |    6      |  MUL
-[ 41]   |    3      |  SUB
-[ 43]   |   52   3  |  POPREG DX
-[ 45]   |   33   3  |  PUSHREG DX
-[ 45]   |    1   0  |  PUSH
-[ 47]   |    9 127  |  JB
-[ 51]   |   33   3  |  PUSHREG DX
-[ 51]   |    1   0  |  PUSH
-[ 53]   |   13 103  |  JE
-[ 57]   |   33   1  |  PUSHREG BX
-[ 57]   |    1  -1  |  PUSH
-[ 60]   |    6      |  MUL
-[ 62]   |   33   3  |  PUSHREG DX
-[ 63]   |    7      |  SQVRT
-[ 64]   |    2      |  ADD
-[ 64]   |    1   2  |  PUSH
-[ 67]   |    4      |  DIV
-[ 69]   |   33   0  |  PUSHREG AX
-[ 70]   |    4      |  DIV
-[ 72]   |   52   4  |  POPREG EX
-[ 74]   |   33   1  |  PUSHREG BX
-[ 74]   |    1  -1  |  PUSH
-[ 77]   |    6      |  MUL
-[ 79]   |   33   3  |  PUSHREG DX
-[ 80]   |    7      |  SQVRT
-[ 81]   |    3      |  SUB
-[ 81]   |    1   2  |  PUSH
-[ 84]   |    4      |  DIV
-[ 86]   |   33   0  |  PUSHREG AX
-[ 87]   |    4      |  DIV
-[ 89]   |   52   5  |  POPREG FX
-[ 89]   |    1   2  |  PUSH
-[ 93]   |   52   6  |  POPREG GX
-[ 95]   |   33   6  |  PUSHREG GX
-[ 96]   |    5      |  OUT
-[ 98]   |   33   4  |  PUSHREG EX
-[ 99]   |    5      |  OUT
-[101]   |   33   5  |  PUSHREG FX
-[102]   |    5      |  OUT
-[103]   |    0      |  HLT
-[105]   |   33   1  |  PUSHREG BX
-[107]   |   33   0  |  PUSHREG AX
-[108]   |    4      |  DIV
-[108]   |    1  -1  |  PUSH
-[111]   |    6      |  MUL
-[111]   |    1   2  |  PUSH
-[114]   |    4      |  DIV
-[116]   |   52   4  |  POPREG EX
-[116]   |    1   1  |  PUSH
-[120]   |   52   6  |  POPREG GX
-[122]   |   33   6  |  PUSHREG GX
-[123]   |    5      |  OUT
-[125]   |   33   4  |  PUSHREG EX
-[126]   |    5      |  OUT
-[127]   |    0      |  HLT
-[127]   |    1   0  |  PUSH
-[130]   |    5      |  OUT
-[131]   |    0      |  HLT
-[131]   |    1   0  |  PUSH
-[135]   |   52   4  |  POPREG EX
-[135]   |    1   2  |  PUSH
-[139]   |   52   6  |  POPREG GX
-[141]   |   33   1  |  PUSHREG BX
-[143]   |   33   0  |  PUSHREG AX
-[144]   |    4      |  DIV
-[144]   |    1  -1  |  PUSH
-[147]   |    6      |  MUL
-[149]   |   52   5  |  POPREG FX
-[151]   |   33   6  |  PUSHREG GX
-[152]   |    5      |  OUT
-[154]   |   33   4  |  PUSHREG EX
-[155]   |    5      |  OUT
-[157]   |   33   5  |  PUSHREG FX
-[158]   |    5      |  OUT
-[159]   |    0      |  HLT
-[161]   |   33   1  |  PUSHREG BX
-[161]   |    1   0  |  PUSH
-[163]   |   13 244  |  JE
-[167]   |   33   2  |  PUSHREG CX
-[167]   |    1   0  |  PUSH
-[169]   |   13 254  |  JE
-[173]   |   33   2  |  PUSHREG CX
-[173]   |    1  -1  |  PUSH
-[176]   |    6      |  MUL
-[178]   |   33   1  |  PUSHREG BX
-[179]   |    4      |  DIV
-[181]   |   52   4  |  POPREG EX
-[181]   |    1   1  |  PUSH
-[185]   |   52   6  |  POPREG GX
-[187]   |   33   6  |  PUSHREG GX
-[188]   |    5      |  OUT
-[190]   |   33   4  |  PUSHREG EX
-[191]   |    5      |  OUT
-[192]   |    0      |  HLT
-[194]   |   33   2  |  PUSHREG CX
-[194]   |    1   0  |  PUSH
-[196]   |   13 254  |  JE
-[200]   |   33   2  |  PUSHREG CX
-[202]   |   33   0  |  PUSHREG AX
-[203]   |    4      |  DIV
-[203]   |    1  -1  |  PUSH
-[206]   |    6      |  MUL
-[208]   |   52   3  |  POPREG DX
-[210]   |   33   3  |  PUSHREG DX
-[210]   |    1   0  |  PUSH
-[212]   |    9 265  |  JB
-[216]   |   33   3  |  PUSHREG DX
-[217]   |    7      |  SQVRT
-[219]   |   52   4  |  POPREG EX
-[221]   |   33   4  |  PUSHREG EX
-[221]   |    1  -1  |  PUSH
-[224]   |    6      |  MUL
-[226]   |   52   5  |  POPREG FX
-[228]   |   33   5  |  PUSHREG FX
-[230]   |   33   4  |  PUSHREG EX
-[230]   |    1   2  |  PUSH
-[234]   |   52   6  |  POPREG GX
-[236]   |   33   6  |  PUSHREG GX
-[237]   |    5      |  OUT
-[239]   |   33   4  |  PUSHREG EX
-[240]   |    5      |  OUT
-[242]   |   33   5  |  PUSHREG FX
-[243]   |    5      |  OUT
-[244]   |    0      |  HLT
-[246]   |   33   2  |  PUSHREG CX
-[246]   |    1   0  |  PUSH
-[248]   |   13 261  |  JE
-[250]   |    1   0  |  PUSH
-[253]   |    5      |  OUT
-[254]   |    0      |  HLT
-[254]   |    1   1  |  PUSH
-[257]   |    5      |  OUT
-[257]   |    1   0  |  PUSH
-[260]   |    5      |  OUT
-[261]   |    0      |  HLT
-[261]   |    1  -1  |  PUSH
-[264]   |    5      |  OUT
-[265]   |    0      |  HLT
-[265]   |    1   0  |  PUSH
-[268]   |    5      |  OUT
-[269]   |    0      |  HLT
+[ 32]   |   33   4  |  PUSHREG EX
+[ 33]   |    3      |  SUB
+[ 34]   |    6      |  MUL
+[ 35]   |   33   2  |  PUSHREG CX
+[ 36]   |   33   5  |  PUSHREG FX
+[ 37]   |    3      |  SUB
+[ 38]   |   33   2  |  PUSHREG CX
+[ 39]   |   33   5  |  PUSHREG FX
+[ 40]   |    3      |  SUB
+[ 41]   |    6      |  MUL
+[ 42]   |    2      |  ADD
+[ 43]   |    7      |  SQVRT
+[ 44]   |   33   6  |  PUSHREG GX
+[ 45]   |   10  77  |  JBE
+[ 46]   |    1   0  |  PUSH
+[ 47]   |   17      |  RET
+[ 49]   |    1   1  |  PUSH
+[ 50]   |   17      |  RET
+[ 52]   |   33   3  |  PUSHREG DX
+[ 53]   |    1   2  |  PUSH
+[ 54]   |    4      |  DIV
+[ 55]   |   52   4  |  POPREG EX
+[ 56]   |   33   3  |  PUSHREG DX
+[ 57]   |    1   2  |  PUSH
+[ 58]   |    4      |  DIV
+[ 59]   |   52   5  |  POPREG FX
+[ 60]   |   17      |  RET
+[ 62]   |   33   2  |  PUSHREG CX
+[ 63]   |   33   3  |  PUSHREG DX
+[ 64]   |    6      |  MUL
+[ 65]   |   33   1  |  PUSHREG BX
+[ 66]   |    2      |  ADD
+[ 67]   |   52   7  |  POPREG HX
+[ 68]   |   17      |  RET
+[ 70]   |   33   1  |  PUSHREG BX
+[ 71]   |    1   1  |  PUSH
+[ 72]   |    2      |  ADD
+[ 73]   |   52   1  |  POPREG BX
+[ 74]   |   16 116  |  CALL
+[ 75]   |   17      |  RET
+[ 77]   |   33   1  |  PUSHREG BX
+[ 78]   |   33   3  |  PUSHREG DX
+[ 79]   |   13 123  |  JE
+[ 80]   |   17      |  RET
+[ 82]   |    1   0  |  PUSH
+[ 83]   |   52   1  |  POPREG BX
+[ 84]   |    1   1  |  PUSH
+[ 85]   |   33   2  |  PUSHREG CX
+[ 86]   |    2      |  ADD
+[ 87]   |   52   2  |  POPREG CX
+[ 88]   |   17      |  RET
 

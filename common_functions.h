@@ -34,12 +34,22 @@ enum CmdCodes
     cmdPOPREG = 52
 };
 
-enum ArhType
+
+enum ArgType
 {
     no_arg = 0,
     registr_arg,
     jmp_arg,
     digit_arg
+};
+
+typedef void (*func_ptr_t)(struct SPU* spu);
+
+struct StructCmd {
+    const char* name;
+    int cmd;
+    ArgType arg;
+    func_ptr_t cmd_function;
 };
 
 const int NUM_OF_CMDS = 23;

@@ -10,7 +10,7 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
-extern SPUStructCmd all_cmd_funcs[NUM_OF_CMDS];
+extern StructCmd all_cmd[NUM_OF_CMDS];
 
 int SPUCtor(SPU* spu)
 {
@@ -113,17 +113,18 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         getchar();
         #endif
 
-        if (spu->buffer.code_arr[spu->pc] == cmdHLT){
-            //SPUdump(spu);
-            return 0;
-        }
-
         bool check_correct_cmd = false;
 
         for (int index = 0; index < NUM_OF_CMDS; ++index) {
-            if (all_cmd_funcs[index].cmd == spu->buffer.code_arr[spu->pc]) {
+            if (all_cmd[index].cmd == spu->buffer.code_arr[spu->pc]) {
 
-                all_cmd_funcs[index].cmd_function(spu);
+                all_cmd[index].cmd_function(spu);
+
+                if (all_cmd[index].cmd == cmdHLT){
+                    //SPUdump(spu);
+                    return 0;
+                }
+
                 check_correct_cmd = true;
                 break;
             }
@@ -271,6 +272,13 @@ void Call(struct SPU* spu)
     StackPush(&spu->ret_stk, spu->pc);
 
     spu->pc =  arg - 1;
+}
+
+void Hlt(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    printf("End SPU");
 }
 
 void Ret(struct SPU* spu)

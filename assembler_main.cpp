@@ -10,7 +10,7 @@
 
 const char* log_file_name = "logfile.txt";
 const char* listing_file_name = "listing.lst";
-const char* source_file_name = "quadratic.asm";
+const char* source_file_name = "source.asm";
 
 FILE* log_file = fopen(log_file_name, "w");
 FILE* lst_file = fopen(listing_file_name, "w");

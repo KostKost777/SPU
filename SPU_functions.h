@@ -24,14 +24,6 @@ enum SPUErr
     pc_err = 16
 };
 
-typedef void (*func_ptr_t)(struct SPU* spu);
-
-struct SPUStructCmd
-{
-    int cmd;
-    func_ptr_t cmd_function;
-};
-
 void SkipLine(void);
 
 void PrintSPUErrors(int err_code);
@@ -59,6 +51,8 @@ void Jb(struct SPU* spu);
 void Jbe(struct SPU* spu);
 
 void Draw(struct SPU* spu);
+
+void Hlt(struct SPU* spu);
 
 void Ja(struct SPU* spu);
 

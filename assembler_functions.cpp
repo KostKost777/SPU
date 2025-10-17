@@ -14,7 +14,7 @@ extern FILE* lst_file;
 extern const char* log_file_name;
 extern const char* source_file_name;
 
-extern AsmStructCmd all_cmd[NUM_OF_CMDS];
+extern StructCmd all_cmd[NUM_OF_CMDS];
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
 int AssemPrintLogs(const char* message, size_t line)
@@ -131,8 +131,8 @@ int EmitInArr(struct Buffer* buffer, int value)
     return 0;
 }
 
-int TryRegFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, AsmStructCmd cmd_struct)
+int ExecuteRegFunctions(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -148,8 +148,7 @@ int TryRegFunctions(char* str_with_arg, struct Buffer* buffer,
     EmitInArr(buffer, registr);
     *pc+=2;
 
-    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s %cX\n",
-                       buffer->size - HEADER_OFFSET,
+    fprintf(lst_file, "  %3d %3d  |  %s %cX\n",
                        cmd_struct.cmd, registr,
                        cmd_struct.name, registr + 'A');
 
@@ -168,7 +167,7 @@ int GetRegIndex(char* str_with_reg)
 
     // printf("\nSTR: %s\n\n", str_with_reg);
 
-    int status2 = sscanf(str_with_reg, "%*s [%2[^]]", regname);
+    int status2 = sscanf(str_with_reg, "%*s [%[^]]", regname);
 
 //     printf("\nSTR: %s\n\n", str_with_reg);
 //
@@ -188,8 +187,8 @@ int GetRegIndex(char* str_with_reg)
     return -1;
 }
 
-int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, int labels[], AsmStructCmd cmd_struct)
+int ExecuteJumpFunctions(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, int labels[], StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -203,8 +202,7 @@ int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
 
     *pc+=2;
 
-    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
-                       buffer->size - HEADER_OFFSET,
+    fprintf(lst_file, "  %3d %3d  |  %s\n",
                        cmd_struct.cmd, labels[arg],
                        cmd_struct.name);
 
@@ -214,8 +212,8 @@ int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
     return 1;
 }
 
-int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, AsmStructCmd cmd_struct)
+int ExecutePushFunction(char* str_with_arg, struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -226,8 +224,7 @@ int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
     if (sscanf(str_with_arg, "%*s %d", &arg) == 0)
         return 0;
 
-    fprintf(lst_file, "[%3u]   |  %3d %3d  |  %s\n",
-                       buffer->size - HEADER_OFFSET,
+    fprintf(lst_file, "  %3d %3d  |  %s\n",
                        cmd_struct.cmd, arg, cmd_struct.name);
 
     EmitInArr(buffer, cmd_struct.cmd);
@@ -238,19 +235,15 @@ int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
     return 1;
 }
 
-int TryNoArgFunctions(struct Buffer* buffer,
-                      int* pc, AsmStructCmd cmd_struct)
+int ExecuteNoArgFunctions(struct Buffer* buffer,
+                      int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(pc != NULL);
 
-    if (cmd_struct.have_arg == true)
-        return 0;
-
     EmitInArr(buffer, cmd_struct.cmd);
 
-    fprintf(lst_file, "[%3u]   |  %3d      |  %s\n",
-                    buffer->size - HEADER_OFFSET,
+    fprintf(lst_file, "  %3d      |  %s\n",
                     cmd_struct.cmd, cmd_struct.name);
 
     *pc+=1;
@@ -285,6 +278,8 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
             continue;
         }
 
+        fprintf(lst_file, "[%3u]   |", i);
+
         int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
                             "%s", cmdStr);
 
@@ -305,22 +300,40 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
 
             if (strcmp(all_cmd[index].name, cmdStr) == 0) {
                 //printf("cmdStr: %s\n", cmdStr);
-                if (TryNoArgFunctions(buffer, &pc, all_cmd[index]))
-                    check_correct_cmd = true;
 
-                else if (TryRegFunctions(Asmtext.poem_ptr_array[i].line_ptr,
-                                        buffer, &pc, all_cmd[index]))
-                    check_correct_cmd = true;
+                if (all_cmd[index].arg == no_arg) {
 
-                else if (TryPushFunction(Asmtext.poem_ptr_array[i].line_ptr,
-                                            buffer, &pc,
-                                            all_cmd[index]))
-                    check_correct_cmd = true;
+                    ExecuteNoArgFunctions(buffer, &pc, all_cmd[index]);
 
-                else if (TryJumpFunctions(Asmtext.poem_ptr_array[i].line_ptr,
-                                            buffer, &pc, labels,
-                                            all_cmd[index]))
-                        check_correct_cmd = true;
+                    check_correct_cmd = true;
+                }
+
+                else if (all_cmd[index].arg == registr_arg) {
+
+                    ExecuteRegFunctions(Asmtext.poem_ptr_array[i].line_ptr,
+                                    buffer, &pc, all_cmd[index]);
+
+                    check_correct_cmd = true;
+                }
+
+                else if (all_cmd[index].arg == digit_arg) {
+
+                    ExecutePushFunction(Asmtext.poem_ptr_array[i].line_ptr,
+                                    buffer, &pc,
+                                    all_cmd[index]);
+
+                    check_correct_cmd = true;
+                }
+
+                else if (all_cmd[index].arg == jmp_arg) {
+
+                    ExecuteJumpFunctions(Asmtext.poem_ptr_array[i].line_ptr,
+                                    buffer, &pc, labels,
+                                    all_cmd[index]);
+
+                    check_correct_cmd = true;
+                }
+
 
                 if (check_correct_cmd) break;
             }
