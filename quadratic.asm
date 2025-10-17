@@ -7,13 +7,13 @@ POPREG CX
 PUSHREG AX
 PUSH 0
 JE :1
-PUSH 0
+PUSH 0          ;если А != 0
 PUSHREG BX
 JE :2
-PUSHREG CX
+PUSHREG CX      ;если В != 0 и А != 0
 PUSH 0
 JE :3
-PUSHREG BX
+PUSHREG BX      ;если С != 0 и В != 0 и А != 0
 PUSHREG BX
 MUL
 PUSHREG AX
@@ -26,10 +26,10 @@ POPREG DX
 PUSHREG DX
 PUSH 0
 JB :4
-PUSHREG DX
+PUSHREG DX          ;дискр >= 0
 PUSH 0
 JE :5
-PUSHREG BX
+PUSHREG BX          ;дискр > 0
 PUSH -1
 MUL
 PUSHREG DX
@@ -60,7 +60,7 @@ OUT
 PUSHREG FX
 OUT
 HLT
-:5
+:5              ;дискр == 0
 PUSHREG BX
 PUSHREG AX
 DIV
@@ -76,11 +76,11 @@ OUT
 PUSHREG EX
 OUT
 HLT
-:4
+:4               ;дискр < 0
 PUSH 0
 OUT
 HLT
-:3
+:3               ;если С == 0 и В != 0 и А != 0
 PUSH 0
 POPREG EX
 PUSH 2
@@ -98,14 +98,14 @@ OUT
 PUSHREG FX
 OUT
 HLT
-:1
+:1                      ;если А == 0
 PUSHREG BX
 PUSH 0
 JE :7
-PUSHREG CX
+PUSHREG CX          ;если А == 0 и В != 0
 PUSH 0
 JE :6
-PUSHREG CX
+PUSHREG CX       ;если А == 0 и В != 0 и С != 0
 PUSH -1
 MUL
 PUSHREG BX
@@ -118,11 +118,11 @@ OUT
 PUSHREG EX
 OUT
 HLT
-:2
+:2                          ;если А != 0 и В == 0
 PUSHREG CX
 PUSH 0
 JE :6
-PUSHREG CX
+PUSHREG CX      ;если А != 0 и В == 0 и С != 0
 PUSHREG AX
 DIV
 PUSH -1
@@ -130,14 +130,16 @@ MUL
 POPREG DX
 PUSHREG DX
 PUSH 0
-JB :7
-PUSHREG DX
+JB :9
+PUSHREG DX     ;если X^2 = -C / A имеет решения
 SQVRT
 POPREG EX
 PUSHREG EX
 PUSH -1
 MUL
 POPREG FX
+PUSHREG FX
+PUSHREG EX
 PUSH 2
 POPREG GX
 PUSHREG GX
@@ -147,20 +149,24 @@ OUT
 PUSHREG FX
 OUT
 HLT
-:7
+:7              ;если А == 0 и В == 0
 PUSHREG CX
 PUSH 0
 JE :8
-PUSH 0
+PUSH 0        ;если А == 0 и В == 0 и С != 0
 OUT
 HLT
-:6
+:6          ;если А == 0 и В != 0 и С == 0
 PUSH 1
 OUT
 PUSH 0
 OUT
 HLT
-:8
+:8         ;если А == 0 и В == 0 и С == 0
 PUSH -1
+OUT
+HLT
+:9         ;если X^2 = -C / A не имеет решений
+PUSH 0
 OUT
 HLT

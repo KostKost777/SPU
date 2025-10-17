@@ -27,19 +27,15 @@ enum CmdCodes
     cmdIN = 15,
     cmdCALL = 16,
     cmdRET = 17,
+    cmdPUSHM = 18,
+    cmdPOPM = 19,
     cmdPUSHREG = 33,
     cmdPOPREG = 52
 };
 
-struct StructCmd {
-    const char* name;
-    int cmd;
-    bool have_arg;
-};
+const int NUM_OF_CMDS = 22;
 
-const int NUM_OF_CMDS = 20;
-
-const size_t NUMBER_OF_REGS = 7; //AX, BX, CX, DX, EX, FX, GX
+const size_t NUMBER_OF_REGS = 8; //AX, BX, CX, DX, EX, FX, GX, HX
 
 const int CAPACITY = 1500;
 

@@ -14,7 +14,7 @@ extern FILE* lst_file;
 extern const char* log_file_name;
 extern const char* source_file_name;
 
-extern StructCmd all_cmd[NUM_OF_CMDS];
+extern AsmStructCmd all_cmd[NUM_OF_CMDS];
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
 int AssemPrintLogs(const char* message, size_t line)
@@ -132,13 +132,15 @@ int EmitInArr(struct Buffer* buffer, int value)
 }
 
 int TryRegFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+                      int* pc, AsmStructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
     assert(pc != NULL);
 
     int registr = GetRegIndex(str_with_arg);
+
+    //printf("REGISTR: %d   NAME: %s\n", registr,  cmd_struct.name);
 
     if (registr == -1) return 0;
 
@@ -162,9 +164,19 @@ int GetRegIndex(char* str_with_reg)
 
     char regname[MAX_REG_NAME_LEN] = {};
 
-    int status = sscanf(str_with_reg, "%*s %s", regname);
+    int status1 = sscanf(str_with_reg, "%*s %s", regname);
 
-    if (status == 0)
+    // printf("\nSTR: %s\n\n", str_with_reg);
+
+    int status2 = sscanf(str_with_reg, "%*s [%2[^]]", regname);
+
+//     printf("\nSTR: %s\n\n", str_with_reg);
+//
+//     printf("\n\nABOBA: %s\n\n", regname);
+//
+//     printf("STATUS: %d %d\n", status1, status2);
+
+    if ((status1 + status2) == 0)
         return -1;
 
     for (size_t i = 0; i < NUMBER_OF_REGS; ++i) {
@@ -177,7 +189,7 @@ int GetRegIndex(char* str_with_reg)
 }
 
 int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, int labels[], StructCmd cmd_struct)
+                      int* pc, int labels[], AsmStructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -203,7 +215,7 @@ int TryJumpFunctions(char* str_with_arg, struct Buffer* buffer,
 }
 
 int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+                      int* pc, AsmStructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -227,8 +239,11 @@ int TryPushFunction(char* str_with_arg, struct Buffer* buffer,
 }
 
 int TryNoArgFunctions(struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+                      int* pc, AsmStructCmd cmd_struct)
 {
+    assert(buffer != NULL);
+    assert(pc != NULL);
+
     if (cmd_struct.have_arg == true)
         return 0;
 
@@ -273,8 +288,8 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
         int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
                             "%s", cmdStr);
 
-        //  printf("NOW FUNC: %s\n", cmdStr);
-        //  printf("STATUS: %d\n\n", status);
+        //   printf("NOW FUNC: %s\n", cmdStr);
+        //   printf("STATUS: %d\n\n", status);
 
         if (status == EOF){
             PRINT_LOGS("END OF FILE");
@@ -289,7 +304,7 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
         for (int index = 0; index < NUM_OF_CMDS; ++index) {
 
             if (strcmp(all_cmd[index].name, cmdStr) == 0) {
-
+                //printf("cmdStr: %s\n", cmdStr);
                 if (TryNoArgFunctions(buffer, &pc, all_cmd[index]))
                     check_correct_cmd = true;
 

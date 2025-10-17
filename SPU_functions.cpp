@@ -5,9 +5,13 @@
 #include "stack_functions.h"
 #include "SPU_functions.h"
 
+int* RAM = NULL;
+
 extern const char* log_file_name;
 
 extern FILE* log_file;
+
+extern SPUStructCmd all_cmd_funcs[NUM_OF_CMDS];
 
 int SPUCtor(SPU* spu)
 {
@@ -15,6 +19,8 @@ int SPUCtor(SPU* spu)
 
     StackCtor(&spu->stk, CAPACITY);
     StackCtor(&spu->ret_stk, CAPACITY);
+
+    RAM = (int* )calloc(RAM_CAPACITY,sizeof(int));
 
     spu->pc = 0;
     spu->buffer.size = 0;
@@ -61,9 +67,11 @@ int SPUVerifier(SPU* spu)
 
 void SPUDtor(SPU* spu)
 {
-    free(spu->buffer.code_arr - TITLE_OFFSET);
+    free(spu->buffer.code_arr - HEADER_OFFSET);
     StackDtor(&spu->stk);
     StackDtor(&spu->ret_stk);
+    free(RAM);
+    RAM = NULL;
     fclose(log_file);
 }
 
@@ -87,9 +95,9 @@ int SPUReadCmdFromFile(struct SPU* spu)
 
     spu->buffer.size = fread(cmd_buffer, sizeof(int), CAPACITY, bin_file);
 
-    spu->buffer.size -= TITLE_OFFSET;
+    spu->buffer.size -= HEADER_OFFSET;
 
-    spu->buffer.code_arr = cmd_buffer + TITLE_OFFSET;
+    spu->buffer.code_arr = cmd_buffer + HEADER_OFFSET;
 
     fclose(bin_file);
 
@@ -101,109 +109,93 @@ int SPURunCmdFromBuffer(struct SPU* spu)
     SPUVerifier(spu);
     for (; spu->pc < spu->buffer.size; ++(spu->pc)) {
 
-        // SPUdump(spu);
-        // getchar();
+        #ifdef DUMP
+        SPUdump(spu);
+        getchar();
+        #endif
 
-        switch(spu->buffer.code_arr[spu->pc])
-        {
-            case cmdHLT: return 0;
-
-            case cmdSQVRT: Sqvrt(&spu->stk);
-                           break;
-
-            case cmdADD: Add(&spu->stk);
-                         break;
-
-            case cmdSUB: Sub(&spu->stk);
-                         break;
-
-            case cmdDIV: Div(&spu->stk);
-                         break;
-
-            case cmdOUT: Out(&spu->stk);
-                         break;
-
-            case cmdMUL: Mul(&spu->stk);
-                         break;
-
-            case cmdIN: In(&spu->stk);
-                        break;
-
-            case cmdCALL: Call(spu, spu->buffer.code_arr[++spu->pc]);
-                          break;
-
-            case cmdRET: Ret(spu);
-                         break;
-
-            case cmdPUSH: Push(&spu->stk, spu->buffer.code_arr[++spu->pc]);
-                          break;
-
-            case cmdJMP: Jmp(spu, spu->buffer.code_arr[++spu->pc]);
-                         break;
-
-            case cmdJB: Jb(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdJBE: Jbe(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdJA: Ja(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdJAE: Jae(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdJE: Je(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdJNE: Jne(spu, spu->buffer.code_arr[++spu->pc]);
-                        break;
-
-            case cmdPOPREG: PopReg(spu, spu->buffer.code_arr[++spu->pc]);
-                            break;
-
-            case cmdPUSHREG: PushReg(spu, spu->buffer.code_arr[++spu->pc]);
-                             break;
-
-            default: PRINT_LOGS("Invalid command");
-                     return 1;
+        if (spu->buffer.code_arr[spu->pc] == cmdHLT){
+            SPUdump(spu);
+            return 0;
         }
+
+        bool check_correct_cmd = false;
+
+        for (int index = 0; index < NUM_OF_CMDS; ++index) {
+            if (all_cmd_funcs[index].cmd == spu->buffer.code_arr[spu->pc]) {
+
+                all_cmd_funcs[index].cmd_function(spu);
+                check_correct_cmd = true;
+                break;
+            }
+        }
+
+        if (check_correct_cmd == false) {
+            PRINT_LOGS("Invalid command");
+            return 1;
+        }
+
         SPUVerifier(spu);
     }
+
     return 0;
 }
 
-void PopReg(struct SPU* spu, int reg_index)
+void PopReg(struct SPU* spu)
 {
     assert(spu != NULL);
 
-    StackPop(&spu->stk, &spu->regs[reg_index]);
+    StackPop(&spu->stk, &spu->regs[spu->buffer.code_arr[++spu->pc]]);
 }
 
-void PushReg(struct SPU* spu, int reg_index)
+void PushReg(struct SPU* spu)
 {
     assert(spu != NULL);
 
-    StackPush(&spu->stk, spu->regs[reg_index]);
+    StackPush(&spu->stk, spu->regs[spu->buffer.code_arr[++spu->pc]]);
 }
 
-void Push(Stack* stk, int arg)
-{
-    assert(stk != NULL);
-
-    StackPush(stk, arg);
-}
-
-void Jmp(struct SPU* spu, int arg)
+void PopM(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int last_el = 0;
+
+    StackPop(&spu->stk, &last_el);
+
+    RAM[spu->regs[spu->buffer.code_arr[++spu->pc]]] = last_el;
+}
+
+void PushM(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    StackPush(&spu->stk, RAM[spu->buffer.code_arr[++spu->pc]]);
+}
+
+void Push(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
+
+    StackPush(&spu->stk, arg);
+}
+
+void Jmp(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     spu->pc = arg - 1;
 }
 
-void Jb(struct SPU* spu, int arg)
+void Jb(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -211,9 +203,11 @@ void Jb(struct SPU* spu, int arg)
         spu->pc = arg - 1;
 }
 
-void Jbe(struct SPU* spu, int arg)
+void Jbe(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -221,9 +215,11 @@ void Jbe(struct SPU* spu, int arg)
         spu->pc = arg - 1;
 }
 
-void Ja(struct SPU* spu, int arg)
+void Ja(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -231,9 +227,11 @@ void Ja(struct SPU* spu, int arg)
         spu->pc =  arg - 1;
 }
 
-void Jae(struct SPU* spu, int arg)
+void Jae(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -241,9 +239,11 @@ void Jae(struct SPU* spu, int arg)
         spu->pc =  arg - 1;
 }
 
-void Je(struct SPU* spu, int arg)
+void Je(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -251,9 +251,11 @@ void Je(struct SPU* spu, int arg)
         spu->pc =  arg - 1;
 }
 
-void Jne(struct SPU* spu, int arg)
+void Jne(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     GET_TWO_ELEM(&spu->stk);
 
@@ -261,9 +263,11 @@ void Jne(struct SPU* spu, int arg)
         spu->pc =  arg - 1;
 }
 
-void Call(struct SPU* spu, int arg)
+void Call(struct SPU* spu)
 {
     assert(spu != NULL);
+
+    int arg = spu->buffer.code_arr[++spu->pc];
 
     StackPush(&spu->ret_stk, spu->pc);
 
@@ -281,9 +285,9 @@ void Ret(struct SPU* spu)
     spu->pc = last_ret;
 }
 
-void In(struct Stack* stk)
+void In(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
     int value = 0;
     printf("Enter number: ");
@@ -293,67 +297,67 @@ void In(struct Stack* stk)
         printf("Enter number: ");
     }
 
-    StackPush(stk, value);
+    StackPush(&spu->stk, value);
 }
 
-void Add(Stack* stk)
+void Add(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
-    GET_TWO_ELEM(stk);
+    GET_TWO_ELEM(&spu->stk);
 
-    StackPush(stk, elem1 + elem2);
+    StackPush(&spu->stk, elem1 + elem2);
 }
 
-void Sqvrt(Stack* stk)
+void Sqvrt(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
     StackValueType elem = 0;
 
-    StackPop(stk, &elem);
+    StackPop(&spu->stk, &elem);
 
-    StackPush(stk,(int)sqrt(elem));
+    StackPush(&spu->stk,(int)sqrt(elem));
 }
 
-void Sub(Stack* stk)
+void Sub(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
-    GET_TWO_ELEM(stk);
+    GET_TWO_ELEM(&spu->stk);
 
-    StackPush(stk, elem2 - elem1);
+    StackPush(&spu->stk, elem2 - elem1);
 }
 
-void Mul(Stack* stk)
+void Mul(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
-    GET_TWO_ELEM(stk);
+    GET_TWO_ELEM(&spu->stk);
 
-    StackPush(stk, elem1 * elem2);
+    StackPush(&spu->stk, elem1 * elem2);
 }
 
-void Div(Stack* stk)
+void Div(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
-    GET_TWO_ELEM(stk);
+    GET_TWO_ELEM(&spu->stk);
 
     if (elem1 == 0){
         PRINT_LOGS("You can`t divide by zero");
     }
     else
-        StackPush(stk, elem2 / elem1);
+        StackPush(&spu->stk, elem2 / elem1);
 }
 
-void Out(Stack* stk)
+void Out(struct SPU* spu)
 {
-    assert(stk != NULL);
+    assert(spu != NULL);
 
     StackValueType elem = 0;
 
-    StackPop(stk, &elem);
+    StackPop(&spu->stk, &elem);
 
     printf("Answer is: %d\n", elem);
 }
@@ -361,6 +365,12 @@ void Out(Stack* stk)
 void SPUdump(struct SPU* spu)
 {
     printf("\n\n&&&&&&&&&&&&&&&&&&&&&&&&-DUMP-&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
+
+    printf("RAM: \n");
+    for (int i = 0; i < RAM_CAPACITY; ++i) {
+        printf("%c", RAM[i] + 35);
+        if ((i + 1) % 50 == 0) printf("\n");
+    }
 
     if (spu->err_code != 0)
         PrintSPUErrors(spu->err_code);

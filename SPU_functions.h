@@ -1,6 +1,8 @@
 #ifndef SPU_FUNCS
 #define SPU_FUNCS
 
+const int RAM_CAPACITY = 2500;
+
 struct SPU
 {
     size_t pc;
@@ -21,13 +23,19 @@ enum SPUErr
     pc_err = 16
 };
 
-const int ACCURACY = 100;
+typedef void (*func_ptr_t)(struct SPU* spu);
+
+struct SPUStructCmd
+{
+    int cmd;
+    func_ptr_t cmd_function;
+};
 
 void SkipLine(void);
 
 void PrintSPUErrors(int err_code);
 
-void In(struct Stack* stk);
+void In(struct SPU* spu);
 
 void SPUDtor(SPU* spu);
 
@@ -41,41 +49,45 @@ int SPUReadCmdFromFile(struct SPU* spu);
 
 int SPURunCmdFromBuffer(struct SPU* spu);
 
-void Push(Stack* stk, int arg);
+void Push(struct SPU* spu);
 
-void Jmp(struct SPU* spu, int arg);
+void Jmp(struct SPU* spu);
 
-void Jb(struct SPU* spu, int arg);
+void Jb(struct SPU* spu);
 
-void Jbe(struct SPU* spu, int arg);
+void Jbe(struct SPU* spu);
 
-void Ja(struct SPU* spu, int arg);
+void Ja(struct SPU* spu);
 
-void Jae(struct SPU* spu, int arg);
+void Jae(struct SPU* spu);
 
-void Je(struct SPU* spu, int arg);
+void Je(struct SPU* spu);
 
-void Jne(struct SPU* spu, int arg);
+void Jne(struct SPU* spu);
 
-void Call(struct SPU* spu, int arg);
+void Call(struct SPU* spu);
 
 void Ret(struct SPU* spu);
 
-void PopReg(struct SPU* spu, int reg_index);
+void PopReg(struct SPU* spu);
 
-void PushReg(struct SPU* spu, int reg_index);
+void PushReg(struct SPU* spu);
 
-void Add(Stack* stk);
+void PopM(struct SPU* spu);
 
-void Sub(Stack* stk);
+void PushM(struct SPU* spu);
 
-void Mul(Stack* stk);
+void Add(struct SPU* spu);
 
-void Div(Stack* stk);
+void Sub(struct SPU* spu);
 
-void Out(Stack* stk);
+void Mul(struct SPU* spu);
 
-void Sqvrt(Stack* stk);
+void Div(struct SPU* spu);
+
+void Out(struct SPU* spu);
+
+void Sqvrt(struct SPU* spu);
 
 #define GET_TWO_ELEM(stk)           \
     StackValueType elem1 = 0;       \
