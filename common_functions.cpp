@@ -14,7 +14,7 @@ extern const char* log_file_name;
 
 extern FILE* log_file;
 
-AsmStructCmd all_cmd[NUM_OF_CMDS] = {{"IN",          cmdIN,           0},
+AsmStructCmd all_cmd[NUM_OF_CMDS] = {{"IN",          cmdIN,          0},
                                     {"HLT",         cmdHLT,          0},
                                     {"ADD",         cmdADD,          0},
                                     {"SUB",         cmdSUB,          0},
@@ -23,6 +23,7 @@ AsmStructCmd all_cmd[NUM_OF_CMDS] = {{"IN",          cmdIN,           0},
                                     {"MUL",         cmdMUL,          0},
                                     {"SQVRT",       cmdSQVRT,        0},
                                     {"RET",         cmdRET,          0},
+                                    {"DRAW",        cmdDRAW,         0},
                                     {"JMP",         cmdJMP,          1},
                                     {"JB",          cmdJB,           1},
                                     {"JBE",         cmdJBE,          1},
@@ -57,7 +58,8 @@ SPUStructCmd all_cmd_funcs[NUM_OF_CMDS] = { {cmdIN,           In},
                                             {cmdPUSHREG,      PushReg},
                                             {cmdPOPREG,       PopReg},
                                             {cmdPOPM,         PopM},
-                                            {cmdPUSHM,        PushM}};
+                                            {cmdPUSHM,        PushM},
+                                            {cmdDRAW,         Draw}};
 
 const char* reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
                                             "DX", "EX", "FX",

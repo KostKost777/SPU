@@ -1,11 +1,12 @@
 #ifndef SPU_FUNCS
 #define SPU_FUNCS
 
-const int RAM_CAPACITY = 2500;
+const int RAM_SIDE_LEN = 50;
 
 struct SPU
 {
     size_t pc;
+    int* RAM;
     struct Stack stk;
     struct Stack ret_stk;
     struct Buffer buffer;
@@ -56,6 +57,8 @@ void Jmp(struct SPU* spu);
 void Jb(struct SPU* spu);
 
 void Jbe(struct SPU* spu);
+
+void Draw(struct SPU* spu);
 
 void Ja(struct SPU* spu);
 

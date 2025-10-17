@@ -1,11 +1,10 @@
 #include <TXLib.h>
+#include <windows.h>
 
 #include "common_functions.h"
 #include "dump_functions.h"
 #include "stack_functions.h"
 #include "SPU_functions.h"
-
-int* RAM = NULL;
 
 extern const char* log_file_name;
 
@@ -20,7 +19,7 @@ int SPUCtor(SPU* spu)
     StackCtor(&spu->stk, CAPACITY);
     StackCtor(&spu->ret_stk, CAPACITY);
 
-    RAM = (int* )calloc(RAM_CAPACITY,sizeof(int));
+    spu->RAM = (int* )calloc(RAM_SIDE_LEN * RAM_SIDE_LEN,sizeof(int));
 
     spu->pc = 0;
     spu->buffer.size = 0;
@@ -70,8 +69,8 @@ void SPUDtor(SPU* spu)
     free(spu->buffer.code_arr - HEADER_OFFSET);
     StackDtor(&spu->stk);
     StackDtor(&spu->ret_stk);
-    free(RAM);
-    RAM = NULL;
+    free(spu->RAM);
+    spu->RAM = NULL;
     fclose(log_file);
 }
 
@@ -115,7 +114,7 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         #endif
 
         if (spu->buffer.code_arr[spu->pc] == cmdHLT){
-            SPUdump(spu);
+            //SPUdump(spu);
             return 0;
         }
 
@@ -163,14 +162,14 @@ void PopM(struct SPU* spu)
 
     StackPop(&spu->stk, &last_el);
 
-    RAM[spu->regs[spu->buffer.code_arr[++spu->pc]]] = last_el;
+    spu->RAM[spu->regs[spu->buffer.code_arr[++spu->pc]]] = last_el;
 }
 
 void PushM(struct SPU* spu)
 {
     assert(spu != NULL);
 
-    StackPush(&spu->stk, RAM[spu->buffer.code_arr[++spu->pc]]);
+    StackPush(&spu->stk, spu->RAM[spu->buffer.code_arr[++spu->pc]]);
 }
 
 void Push(struct SPU* spu)
@@ -285,6 +284,19 @@ void Ret(struct SPU* spu)
     spu->pc = last_ret;
 }
 
+void Draw(struct SPU* spu)
+{
+    assert(spu != NULL);
+
+    system("cls");
+
+    printf("RAM: \n");
+    for (int i = 0; i < RAM_SIDE_LEN * RAM_SIDE_LEN; ++i) {
+        printf("%c", spu->RAM[i] + 95);
+        if ((i + 1) % RAM_SIDE_LEN == 0) printf("\n");
+    }
+}
+
 void In(struct SPU* spu)
 {
     assert(spu != NULL);
@@ -365,12 +377,6 @@ void Out(struct SPU* spu)
 void SPUdump(struct SPU* spu)
 {
     printf("\n\n&&&&&&&&&&&&&&&&&&&&&&&&-DUMP-&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
-
-    printf("RAM: \n");
-    for (int i = 0; i < RAM_CAPACITY; ++i) {
-        printf("%c", RAM[i] + 35);
-        if ((i + 1) % 50 == 0) printf("\n");
-    }
 
     if (spu->err_code != 0)
         PrintSPUErrors(spu->err_code);

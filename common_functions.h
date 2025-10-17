@@ -29,11 +29,20 @@ enum CmdCodes
     cmdRET = 17,
     cmdPUSHM = 18,
     cmdPOPM = 19,
+    cmdDRAW = 20,
     cmdPUSHREG = 33,
     cmdPOPREG = 52
 };
 
-const int NUM_OF_CMDS = 22;
+enum ArhType
+{
+    no_arg = 0,
+    registr_arg,
+    jmp_arg,
+    digit_arg
+};
+
+const int NUM_OF_CMDS = 23;
 
 const size_t NUMBER_OF_REGS = 8; //AX, BX, CX, DX, EX, FX, GX, HX
 
