@@ -8,16 +8,11 @@
 
 #include "assembler_functions.h"
 
-extern FILE* log_file;
-extern FILE* lst_file;
+FILE* lst_file = fopen("listing.lst", "w");
 
-extern const char* log_file_name;
-extern const char* source_file_name;
+const char* source_file_name = "source.asm";
 
-extern StructCmd all_cmd[NUM_OF_CMDS];
-extern const char* reg_name_arr[NUMBER_OF_REGS];
-
-int AssemPrintLogs(const char* message, size_t line)
+int AsmPrintLogs(const char* message, size_t line)
 {
     assert(message != NULL);
 
@@ -39,7 +34,23 @@ int AssemPrintLogs(const char* message, size_t line)
     return 0;
 }
 
-int AssemWriteCmdInFile(struct Buffer* buffer)
+int BufferCtor(struct Buffer* buffer)
+{
+    assert(buffer != NULL);
+
+    buffer->code_arr = (int*)calloc(BUFFER_CAPACITY, sizeof(int));
+
+    if (buffer->code_arr == NULL) {
+        PRINT_LOGS("Didn`t allocate memory for buffer");
+        return 1;
+    }
+
+    buffer->size = HEADER_OFFSET;
+    return 0;
+}
+
+
+int AsmWriteCmdInFile(struct Buffer* buffer)
 {
 
     assert(buffer != NULL);
@@ -60,7 +71,7 @@ int AssemWriteCmdInFile(struct Buffer* buffer)
     return 0;
 }
 
-int AssemWriteCmdInBinFile(struct Buffer* buffer)
+int AsmWriteCmdInBinFile(struct Buffer* buffer)
 {
     assert(buffer != NULL);
     assert(buffer->code_arr != NULL);
@@ -79,17 +90,28 @@ int AssemWriteCmdInBinFile(struct Buffer* buffer)
     return 0;
 }
 
-void AssemEndProcessing(struct Buffer* buffer)
+void AsmEndProcessing(struct Buffer* buffer)
 {
-    free(buffer->code_arr);
-    buffer->code_arr = NULL;
+    assert(buffer != NULL);
+
+    BufferDtor(buffer);
+
     fclose(log_file);
     fclose(lst_file);
 }
 
-int AssemReadCmdFromFile(struct Buffer* buffer)
+void BufferDtor(struct Buffer* buffer)
 {
+    assert(buffer != NULL);
 
+    free(buffer->code_arr);
+    buffer->code_arr = NULL;
+
+    buffer->size = 0;
+}
+
+int AsmReadCmdFromFile(struct Buffer* buffer)
+{
     assert(buffer != NULL);
     assert(buffer->code_arr != NULL);
 
@@ -100,16 +122,13 @@ int AssemReadCmdFromFile(struct Buffer* buffer)
     buffer->code_arr[0] = SIGNATURE;
     buffer->code_arr[1] = VERSION;
 
-    //printf("%d", lines);
+    int labels[NUM_OF_LABELS] = {};
 
-    int labels[CAPACITY] = {};
-
-    const int NOLABLE = -1;
-    memset(labels, NOLABLE, CAPACITY * sizeof(int));
+    SetDefaultLabels(labels);
 
     for (int compile_iterator = 1; compile_iterator <= 2; ++compile_iterator) {
-        if (ProcessingAsmCommands(buffer, Asmtext, labels) == 1)
-        return 1;
+        if (FillAsmBuffer(buffer, Asmtext, labels) == 1)
+            return 1;
     }
 
     return 0;
@@ -131,8 +150,8 @@ int EmitInArr(struct Buffer* buffer, int value)
     return 0;
 }
 
-int ExecuteRegFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+int InsertRegFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
+                          int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -146,16 +165,17 @@ int ExecuteRegFunctions(char* str_with_arg, struct Buffer* buffer,
 
     EmitInArr(buffer, cmd_struct.cmd);
     EmitInArr(buffer, registr);
+
     *pc+=2;
 
-    fprintf(lst_file, "  %3d %3d  |  %s %cX\n",
-                       cmd_struct.cmd, registr,
+    fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %cX\n",
+                       *pc, cmd_struct.cmd, registr,
                        cmd_struct.name, registr + 'A');
 
     return 1;
 }
 
-int GetRegIndex(char* str_with_reg)
+int GetRegIndex(const char* str_with_reg)
 {
     assert(str_with_reg != NULL);
 
@@ -171,11 +191,9 @@ int GetRegIndex(char* str_with_reg)
 
 //     printf("\nSTR: %s\n\n", str_with_reg);
 //
-//     printf("\n\nABOBA: %s\n\n", regname);
-//
 //     printf("STATUS: %d %d\n", status1, status2);
 
-    if ((status1 + status2) == 0)
+    if (status1 == 0 && status2 == 0)
         return -1;
 
     for (size_t i = 0; i < NUMBER_OF_REGS; ++i) {
@@ -187,8 +205,8 @@ int GetRegIndex(char* str_with_reg)
     return -1;
 }
 
-int ExecuteJumpFunctions(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, int labels[], StructCmd cmd_struct)
+int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
+                           int* pc, int labels[], StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -202,8 +220,8 @@ int ExecuteJumpFunctions(char* str_with_arg, struct Buffer* buffer,
 
     *pc+=2;
 
-    fprintf(lst_file, "  %3d %3d  |  %s\n",
-                       cmd_struct.cmd, labels[arg],
+    fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s\n",
+                       *pc, cmd_struct.cmd, labels[arg],
                        cmd_struct.name);
 
     EmitInArr(buffer, cmd_struct.cmd);
@@ -212,8 +230,8 @@ int ExecuteJumpFunctions(char* str_with_arg, struct Buffer* buffer,
     return 1;
 }
 
-int ExecutePushFunction(char* str_with_arg, struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
+                           int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -224,8 +242,9 @@ int ExecutePushFunction(char* str_with_arg, struct Buffer* buffer,
     if (sscanf(str_with_arg, "%*s %d", &arg) == 0)
         return 0;
 
-    fprintf(lst_file, "  %3d %3d  |  %s\n",
-                       cmd_struct.cmd, arg, cmd_struct.name);
+    fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s\n",
+                       *pc, cmd_struct.cmd,
+                       arg, cmd_struct.name);
 
     EmitInArr(buffer, cmd_struct.cmd);
     EmitInArr(buffer, arg);
@@ -235,24 +254,24 @@ int ExecutePushFunction(char* str_with_arg, struct Buffer* buffer,
     return 1;
 }
 
-int ExecuteNoArgFunctions(struct Buffer* buffer,
-                      int* pc, StructCmd cmd_struct)
+int InsertNoArgFuncInBuffer(struct Buffer* buffer,
+                            int* pc, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(pc != NULL);
 
     EmitInArr(buffer, cmd_struct.cmd);
 
-    fprintf(lst_file, "  %3d      |  %s\n",
-                    cmd_struct.cmd, cmd_struct.name);
+    fprintf(lst_file, "[%3d]   |  %3d      |  %s\n",
+                       *pc, cmd_struct.cmd, cmd_struct.name);
 
     *pc+=1;
 
     return 1;
 }
 
-int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
-                          int labels[CAPACITY])
+int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
+                  int labels[])
 {
     assert(buffer != NULL);
     assert(labels != NULL);
@@ -262,7 +281,7 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
 
     int arg = 0;
     int pc = 0;
-    int source_file_line_now = 1;
+    int source_line_count = 1;
 
     buffer->size = HEADER_OFFSET;
 
@@ -270,81 +289,40 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
 
         bool check_correct_cmd = false;
 
-        if (sscanf(Asmtext.poem_ptr_array[i].line_ptr, " :%d", &arg) == 1){
+        const char* now_line = Asmtext.poem_ptr_array[i].line_ptr;
+
+        if (sscanf(now_line, " :%d", &arg) == 1) {
 
             // printf("ARG: :%d\n", arg);
             labels[arg] = pc;
-            source_file_line_now++;
+            source_line_count++;
             continue;
         }
 
-        fprintf(lst_file, "[%3u]   |", i);
+        int status = sscanf(now_line, "%s", cmdStr);
 
-        int status = sscanf(Asmtext.poem_ptr_array[i].line_ptr,
-                            "%s", cmdStr);
-
-        //   printf("NOW FUNC: %s\n", cmdStr);
-        //   printf("STATUS: %d\n\n", status);
+        //    printf("NOW FUNC: %s\n", cmdStr);
+        //    printf("STATUS: %d\n\n", status);
 
         if (status == EOF){
             PRINT_LOGS("END OF FILE");
             break;
         }
 
-        else if (status == 0) {
-            AssemPrintLogs("Invalid command", source_file_line_now);
+        if (status == 0) {
+            AsmPrintLogs("Invalid command", source_line_count);
             return 1;
         }
 
-        for (int index = 0; index < NUM_OF_CMDS; ++index) {
+        check_correct_cmd = ProcessingAsmCmd(buffer, now_line,
+                                             cmdStr, labels, &pc);
 
-            if (strcmp(all_cmd[index].name, cmdStr) == 0) {
-                //printf("cmdStr: %s\n", cmdStr);
-
-                if (all_cmd[index].arg == no_arg) {
-
-                    ExecuteNoArgFunctions(buffer, &pc, all_cmd[index]);
-
-                    check_correct_cmd = true;
-                }
-
-                else if (all_cmd[index].arg == registr_arg) {
-
-                    ExecuteRegFunctions(Asmtext.poem_ptr_array[i].line_ptr,
-                                    buffer, &pc, all_cmd[index]);
-
-                    check_correct_cmd = true;
-                }
-
-                else if (all_cmd[index].arg == digit_arg) {
-
-                    ExecutePushFunction(Asmtext.poem_ptr_array[i].line_ptr,
-                                    buffer, &pc,
-                                    all_cmd[index]);
-
-                    check_correct_cmd = true;
-                }
-
-                else if (all_cmd[index].arg == jmp_arg) {
-
-                    ExecuteJumpFunctions(Asmtext.poem_ptr_array[i].line_ptr,
-                                    buffer, &pc, labels,
-                                    all_cmd[index]);
-
-                    check_correct_cmd = true;
-                }
-
-
-                if (check_correct_cmd) break;
-            }
-        }
-
-        if (check_correct_cmd == false){
-            AssemPrintLogs("Invalid command", source_file_line_now);
+        if (check_correct_cmd == false) {
+            AsmPrintLogs("Invalid command", source_line_count);
             return 1;
         }
 
-        source_file_line_now++;
+        source_line_count++;
     }
 
     fprintf(lst_file, "\n");
@@ -352,3 +330,64 @@ int ProcessingAsmCommands(struct Buffer* buffer, Struct_Poem Asmtext,
     return 0;
 }
 
+bool ProcessingAsmCmd(struct Buffer* buffer,
+                      const char* line, char cmdStr[],
+                      int labels[], int* pc)
+{
+    int index = 0;
+
+    bool check_correct_cmd = false;
+
+    for (; index < NUM_OF_CMDS; ++index) {
+
+        if (strcmp(all_cmd[index].name, cmdStr) == 0) {
+            //printf("cmdStr: %s\n", cmdStr);
+            check_correct_cmd = true;
+            break;
+        }
+    }
+
+    if (check_correct_cmd == false)
+        return check_correct_cmd;
+
+    else if (all_cmd[index].arg == no_arg) {
+
+        check_correct_cmd = InsertNoArgFuncInBuffer(buffer,
+                                                    pc, all_cmd[index]);
+
+    }
+
+    else if (all_cmd[index].arg == registr_arg) {
+
+        check_correct_cmd = InsertRegFuncInBuffer(line, buffer,
+                                                  pc, all_cmd[index]);
+
+    }
+
+    else if (all_cmd[index].arg == numeric_arg) {
+
+        check_correct_cmd = InsertPushFuncInBuffer(line, buffer,
+                                                   pc, all_cmd[index]);
+
+    }
+
+    else if (all_cmd[index].arg == jmp_arg) {
+
+        check_correct_cmd = InsertJumpFuncInBuffer(line, buffer,
+                                                   pc, labels, all_cmd[index]);
+    }
+
+    return check_correct_cmd;
+}
+
+
+void SetDefaultLabels(int labels[])
+{
+    assert(labels != NULL);
+
+    const int DEFAULT_LABEL = -1;
+
+    for (int i = 0; i < NUM_OF_LABELS; ++i) {
+        labels[i] = DEFAULT_LABEL;
+    }
+}

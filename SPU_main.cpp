@@ -5,24 +5,26 @@
 #include "stack_functions.h"
 #include "SPU_functions.h"
 
-const char* log_file_name = "logfile.txt";
-
-FILE* log_file = fopen(log_file_name, "w");
-
 int main()
 {
     struct SPU spu = {};
 
     SPUCtor(&spu);
 
-    if (SPUReadCmdFromFile(&spu) == 1)
-        return 0;
+    if (SPUReadCmdFromFile(&spu)){
+        SPUDtor(&spu);
+        return 1;
+    }
 
-    if (SPUVerifier(&spu) == 1)
-        return 0;
+    if (SPUVerifier(&spu)){
+        SPUDtor(&spu);
+        return 1;
+    }
 
-    if (SPURunCmdFromBuffer(&spu) == 1)
-        return 0;
+    if (SPURunCmdFromBuffer(&spu)){
+        SPUDtor(&spu);
+        return 1;
+    }
 
     SPUDtor(&spu);
 

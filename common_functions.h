@@ -7,6 +7,9 @@ const int SIGNATURE = 1380077378; //BOBR
 
 const int HEADER_OFFSET = 2;
 
+extern FILE* log_file;
+extern const char* log_file_name;
+
 enum CmdCodes
 {
     cmdHLT = 0,
@@ -34,29 +37,28 @@ enum CmdCodes
     cmdPOPREG = 52
 };
 
-
 enum ArgType
 {
     no_arg = 0,
     registr_arg,
     jmp_arg,
-    digit_arg
+    numeric_arg
 };
 
-typedef void (*func_ptr_t)(struct SPU* spu);
+typedef void (*SPU_func_ptr)(struct SPU* spu, int cmd);
 
 struct StructCmd {
     const char* name;
-    int cmd;
-    ArgType arg;
-    func_ptr_t cmd_function;
+    const int cmd;
+    const ArgType arg;
+    const SPU_func_ptr cmd_function;
 };
 
 const int NUM_OF_CMDS = 23;
 
 const size_t NUMBER_OF_REGS = 8; //AX, BX, CX, DX, EX, FX, GX, HX
 
-const int CAPACITY = 1500;
+const int BUFFER_CAPACITY = 1500;
 
 struct Buffer
 {
@@ -65,5 +67,7 @@ struct Buffer
 };
 
 int ReadCmdFromBinFile(struct Buffer* buffer);
+
+extern StructCmd all_cmd[NUM_OF_CMDS];
 
 #endif

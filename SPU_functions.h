@@ -24,11 +24,7 @@ enum SPUErr
     pc_err = 16
 };
 
-void SkipLine(void);
-
 void PrintSPUErrors(int err_code);
-
-void In(struct SPU* spu);
 
 void SPUDtor(SPU* spu);
 
@@ -36,55 +32,39 @@ void SPUdump(struct SPU* spu);
 
 int SPUCtor(struct SPU* spu);
 
-int SPUVerifier(SPU* spu);
+int SPUVerifier(struct SPU* spu);
+
+void SetDefaultRAMValue(int* RAM, char value);
 
 int SPUReadCmdFromFile(struct SPU* spu);
 
 int SPURunCmdFromBuffer(struct SPU* spu);
 
-void Push(struct SPU* spu);
+void Push(struct SPU* spu, int cmd);
 
-void Jmp(struct SPU* spu);
+void Jmp(struct SPU* spu, int cmd);
 
-void Jb(struct SPU* spu);
+void ConditionalJumps(struct SPU* spu, int cmd);
 
-void Jbe(struct SPU* spu);
+void In(struct SPU* spu, int cmd);
 
-void Draw(struct SPU* spu);
+void Draw(struct SPU* spu, int cmd);
 
-void Hlt(struct SPU* spu);
+void Hlt(struct SPU* spu, int cmd);
 
-void Ja(struct SPU* spu);
+void Call(struct SPU* spu, int cmd);
 
-void Jae(struct SPU* spu);
+void Ret(struct SPU* spu, int cmd);
 
-void Je(struct SPU* spu);
+void RegFuncs(struct SPU* spu, int cmd);
 
-void Jne(struct SPU* spu);
+void MemFuncs(struct SPU* spu, int cmd);
 
-void Call(struct SPU* spu);
+void BinaryArifmeticFuncs(struct SPU* spu, int cmd);
 
-void Ret(struct SPU* spu);
+void Out(struct SPU* spu, int cmd);
 
-void PopReg(struct SPU* spu);
-
-void PushReg(struct SPU* spu);
-
-void PopM(struct SPU* spu);
-
-void PushM(struct SPU* spu);
-
-void Add(struct SPU* spu);
-
-void Sub(struct SPU* spu);
-
-void Mul(struct SPU* spu);
-
-void Div(struct SPU* spu);
-
-void Out(struct SPU* spu);
-
-void Sqvrt(struct SPU* spu);
+void Sqvrt(struct SPU* spu, int cmd);
 
 #define GET_TWO_ELEM(stk)           \
     StackValueType elem1 = 0;       \

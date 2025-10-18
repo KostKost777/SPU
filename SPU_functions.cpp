@@ -6,20 +6,23 @@
 #include "stack_functions.h"
 #include "SPU_functions.h"
 
-extern const char* log_file_name;
+#include "MC_Onegin\read_poem_from_file_functions.h"
 
-extern FILE* log_file;
-
-extern StructCmd all_cmd[NUM_OF_CMDS];
 
 int SPUCtor(SPU* spu)
 {
     assert(spu != NULL);
 
-    StackCtor(&spu->stk, CAPACITY);
-    StackCtor(&spu->ret_stk, CAPACITY);
+    const int STACK_CAPACITY = 1000;
+
+    StackCtor(&spu->stk, STACK_CAPACITY);
+    StackCtor(&spu->ret_stk, STACK_CAPACITY);
 
     spu->RAM = (int* )calloc(RAM_SIDE_LEN * RAM_SIDE_LEN,sizeof(int));
+
+    assert(spu->RAM != NULL);
+
+    SetDefaultRAMValue(spu->RAM, '#');
 
     spu->pc = 0;
     spu->buffer.size = 0;
@@ -27,31 +30,22 @@ int SPUCtor(SPU* spu)
     return 0;
 }
 
+void SetDefaultRAMValue(int* RAM, char value)
+{
+    for (int i = 0; i < RAM_SIDE_LEN * RAM_SIDE_LEN; ++i)
+        RAM[i] = value;
+}
+
 int SPUVerifier(SPU* spu)
 {
     assert(spu != NULL);
 
-    //printf("%d\n", spu->buffer.code_arr[0]);
-
-    if (spu->buffer.code_arr[-2] != SIGNATURE) {
-        PRINT_LOGS("This byte code is not for this processor.");
-        spu->err_code |= mask_err;
-        return mask_err;
-    }
-
-
-    if (spu->buffer.code_arr[-1] != VERSION) {
-        PRINT_LOGS("This processor version is outdated, please recompile it.");
-        spu->err_code |= version_err;
-        return version_err;
-    }
-
-    if (spu->buffer.size >= CAPACITY) {
+    if (spu->buffer.size >= BUFFER_CAPACITY) {
         spu->err_code |= code_arr_size_err;
         return code_arr_size_err;
     }
 
-    if (spu->pc >= CAPACITY) {
+    if (spu->pc >= BUFFER_CAPACITY) {
         spu->err_code |= pc_err;
         return pc_err;
     }
@@ -76,10 +70,7 @@ void SPUDtor(SPU* spu)
 
 int SPUReadCmdFromFile(struct SPU* spu)
 {
-    if (spu == NULL){
-        PRINT_LOGS("Buffer have NULL ptr");
-        return 1;
-    }
+    assert(spu != NULL);
 
     FILE* bin_file = fopen("binfile.bin", "rb");
 
@@ -88,15 +79,25 @@ int SPUReadCmdFromFile(struct SPU* spu)
         return 1;
     }
 
-    int* cmd_buffer = (int*)calloc(CAPACITY, sizeof(int));
+    int* cmd_buffer = (int*)calloc(BUFFER_CAPACITY, sizeof(int));
 
     assert(cmd_buffer != NULL);
 
-    spu->buffer.size = fread(cmd_buffer, sizeof(int), CAPACITY, bin_file);
+    spu->buffer.size = fread(cmd_buffer, sizeof(int), BUFFER_CAPACITY, bin_file);
 
     spu->buffer.size -= HEADER_OFFSET;
 
     spu->buffer.code_arr = cmd_buffer + HEADER_OFFSET;
+
+    if (spu->buffer.code_arr[-2] != SIGNATURE) {
+        PRINT_LOGS("This byte code is not for this processor.");
+        return 1;
+    }
+
+    if (spu->buffer.code_arr[-1] != VERSION) {
+        PRINT_LOGS("This processor version is outdated, please recompile it.");
+        return 1;
+    }
 
     fclose(bin_file);
 
@@ -118,7 +119,7 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         for (int index = 0; index < NUM_OF_CMDS; ++index) {
             if (all_cmd[index].cmd == spu->buffer.code_arr[spu->pc]) {
 
-                all_cmd[index].cmd_function(spu);
+                all_cmd[index].cmd_function(spu, all_cmd[index].cmd);
 
                 if (all_cmd[index].cmd == cmdHLT){
                     //SPUdump(spu);
@@ -141,149 +142,168 @@ int SPURunCmdFromBuffer(struct SPU* spu)
     return 0;
 }
 
-void PopReg(struct SPU* spu)
+void BinaryArifmeticFuncs(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    StackPop(&spu->stk, &spu->regs[spu->buffer.code_arr[++spu->pc]]);
+    GET_TWO_ELEM(&spu->stk);
+
+    switch(cmd)
+    {
+        case cmdADD: StackPush(&spu->stk, elem1 + elem2);
+                     break;
+
+        case cmdSUB: StackPush(&spu->stk, elem2 - elem1);
+                     break;
+
+        case cmdMUL: StackPush(&spu->stk, elem1 * elem2);
+                     break;
+
+        case cmdDIV:
+            if (elem1 == 0) {
+                PRINT_LOGS("You can`t divide by zero");
+            }
+            else
+                StackPush(&spu->stk, elem2 / elem1);
+
+            break;
+
+        default: PRINT_LOGS("Unknown command");
+    }
 }
 
-void PushReg(struct SPU* spu)
+void ConditionalJumps(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    StackPush(&spu->stk, spu->regs[spu->buffer.code_arr[++spu->pc]]);
+    int arg = spu->buffer.code_arr[++spu->pc] - 1;
+
+    GET_TWO_ELEM(&spu->stk);
+
+    switch(cmd)
+    {
+        case cmdJB:
+            if (elem2 < elem1)
+                spu->pc = arg;
+            break;
+
+        case cmdJBE:
+            if (elem2 <= elem1)
+                spu->pc = arg;
+            break;
+
+        case cmdJA:
+            if (elem2 > elem1)
+                spu->pc =  arg;
+            break;
+
+        case cmdJAE:
+            if (elem2 >= elem1)
+                spu->pc =  arg;
+            break;
+
+        case cmdJE:
+            if (elem2 == elem1)
+                spu->pc =  arg;
+            break;
+
+        case cmdJNE:
+            if (elem2 != elem1)
+                spu->pc =  arg;
+            break;
+
+        default: PRINT_LOGS("Unknown command");
+    }
 }
 
-void PopM(struct SPU* spu)
+void RegFuncs(struct SPU* spu, int cmd)
+{
+    assert(spu != NULL);
+
+    int* registr_cell = &spu->regs[spu->buffer.code_arr[++spu->pc]];
+
+    switch(cmd)
+    {
+        case cmdPOPREG: StackPop(&spu->stk, registr_cell);
+                        break;
+
+        case cmdPUSHREG: StackPush(&spu->stk, *registr_cell);
+                         break;
+
+        default: PRINT_LOGS("Unknown command");
+    }
+}
+
+void MemFuncs(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
     int last_el = 0;
 
-    StackPop(&spu->stk, &last_el);
+    int* registr_cell = &spu->regs[spu->buffer.code_arr[++spu->pc]];
 
-    spu->RAM[spu->regs[spu->buffer.code_arr[++spu->pc]]] = last_el;
+    switch(cmd)
+    {
+        case cmdPOPM: StackPop(&spu->stk, &last_el);
+                      spu->RAM[*registr_cell] = last_el;
+                      break;
+
+        case cmdPUSHM: StackPush(&spu->stk, spu->RAM[*registr_cell]);
+                       break;
+
+        default: PRINT_LOGS("Unknown command");
+    }
 }
 
-void PushM(struct SPU* spu)
+void Push(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    StackPush(&spu->stk, spu->RAM[spu->buffer.code_arr[++spu->pc]]);
-}
-
-void Push(struct SPU* spu)
-{
-    assert(spu != NULL);
+    (void)cmd;
 
     int arg = spu->buffer.code_arr[++spu->pc];
 
     StackPush(&spu->stk, arg);
 }
 
-void Jmp(struct SPU* spu)
+void Jmp(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    int arg = spu->buffer.code_arr[++spu->pc];
+    (void)cmd;
 
-    spu->pc = arg - 1;
+    int arg = spu->buffer.code_arr[++spu->pc] - 1;
+
+    spu->pc = arg;
 }
 
-void Jb(struct SPU* spu)
+void Call(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    int arg = spu->buffer.code_arr[++spu->pc];
+    (void)cmd;
 
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 < elem1)
-        spu->pc = arg - 1;
-}
-
-void Jbe(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 <= elem1)
-        spu->pc = arg - 1;
-}
-
-void Ja(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 > elem1)
-        spu->pc =  arg - 1;
-}
-
-void Jae(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 >= elem1)
-        spu->pc =  arg - 1;
-}
-
-void Je(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 == elem1)
-        spu->pc =  arg - 1;
-}
-
-void Jne(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem2 != elem1)
-        spu->pc =  arg - 1;
-}
-
-void Call(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    int arg = spu->buffer.code_arr[++spu->pc];
+    int arg = spu->buffer.code_arr[++spu->pc] - 1;
 
     StackPush(&spu->ret_stk, spu->pc);
 
-    spu->pc =  arg - 1;
+    spu->pc =  arg;
 }
 
-void Hlt(struct SPU* spu)
+void Hlt(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
+
+    (void)cmd;
 
     printf("End SPU");
 }
 
-void Ret(struct SPU* spu)
+void Ret(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
+
+    (void)cmd;
 
     int last_ret = 0;
 
@@ -292,25 +312,33 @@ void Ret(struct SPU* spu)
     spu->pc = last_ret;
 }
 
-void Draw(struct SPU* spu)
+void Draw(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
+
+    (void)cmd;
 
     system("cls");
 
     printf("RAM: \n");
     for (int i = 0; i < RAM_SIDE_LEN * RAM_SIDE_LEN; ++i) {
-        printf("%c", spu->RAM[i] + 95);
-        if ((i + 1) % RAM_SIDE_LEN == 0) printf("\n");
+
+        printf("%c", spu->RAM[i]);
+
+        if ((i + 1) % RAM_SIDE_LEN == 0)
+            printf("\n");
     }
 }
 
-void In(struct SPU* spu)
+void In(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
+    (void)cmd;
 
     int value = 0;
+
     printf("Enter number: ");
+
     while (scanf("%d", &value) != 1) {
         SkipLine();
         printf("\nWrong input\n");
@@ -320,18 +348,11 @@ void In(struct SPU* spu)
     StackPush(&spu->stk, value);
 }
 
-void Add(struct SPU* spu)
+void Sqvrt(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    GET_TWO_ELEM(&spu->stk);
-
-    StackPush(&spu->stk, elem1 + elem2);
-}
-
-void Sqvrt(struct SPU* spu)
-{
-    assert(spu != NULL);
+    (void)cmd;
 
     StackValueType elem = 0;
 
@@ -340,40 +361,11 @@ void Sqvrt(struct SPU* spu)
     StackPush(&spu->stk,(int)sqrt(elem));
 }
 
-void Sub(struct SPU* spu)
+void Out(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
-    GET_TWO_ELEM(&spu->stk);
-
-    StackPush(&spu->stk, elem2 - elem1);
-}
-
-void Mul(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    GET_TWO_ELEM(&spu->stk);
-
-    StackPush(&spu->stk, elem1 * elem2);
-}
-
-void Div(struct SPU* spu)
-{
-    assert(spu != NULL);
-
-    GET_TWO_ELEM(&spu->stk);
-
-    if (elem1 == 0){
-        PRINT_LOGS("You can`t divide by zero");
-    }
-    else
-        StackPush(&spu->stk, elem2 / elem1);
-}
-
-void Out(struct SPU* spu)
-{
-    assert(spu != NULL);
+    (void)cmd;
 
     StackValueType elem = 0;
 
@@ -447,13 +439,6 @@ void PrintSPUErrors(int err_code)
     if (err_code & code_arr_ptr_err)
         PRINT_LOGS("Null pointer to an array of commands");
 
-}
-
-void SkipLine(void)
-{
-    int ch = 0;
-    while ((ch = getchar()) != '\n')
-        continue;
 }
 
 
