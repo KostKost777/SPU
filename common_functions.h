@@ -40,9 +40,9 @@ enum CmdCodes
 enum ArgType
 {
     no_arg = 0,
-    registr_arg,
-    jmp_arg,
-    numeric_arg
+    registr_arg = 1,
+    jmp_arg = 2,
+    numeric_arg = 3
 };
 
 typedef int (*SPU_func_ptr)(struct SPU* spu, int cmd);
@@ -52,6 +52,7 @@ struct StructCmd {
     const int cmd;
     const ArgType arg;
     const SPU_func_ptr cmd_function;
+    unsigned long long hash;
 };
 
 const int NUM_OF_CMDS = 23;

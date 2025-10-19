@@ -10,7 +10,7 @@
 
 FILE* lst_file = fopen("listing.lst", "w");
 
-const char* source_file_name = "factorial.asm";
+const char* source_file_name = "source.asm";
 
 int AsmPrintLogs(const char* message, size_t line)
 {
@@ -291,7 +291,7 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
                                              cmdStr, labels, &pc);
 
         if (check_correct_cmd == false) {
-            AsmPrintLogs("Invalid command))))", source_line_count);
+            AsmPrintLogs("Invalid command", source_line_count);
             return 1;
         }
 
@@ -307,47 +307,56 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
                       int labels[], int* pc)
 {
-    int index = 0;
+    assert(buffer != NULL);
+    assert(line != NULL);
+    assert(pc != NULL);
+    assert(cmdStr != NULL);
 
-    bool check_correct_cmd = false;
+    unsigned long long cmdStr_hash = GetHash(cmdStr);
 
-    for (; index < NUM_OF_CMDS; ++index) {
+    //printf("Hash: %s - %u\n", cmdStr, cmdStr_hash);
 
-        if (strcmp(all_cmd[index].name, cmdStr) == 0) {
-            //printf("cmdStr: %s\n", cmdStr);
-            check_correct_cmd = true;
-            break;
-        }
-    }
+    bool check_correct_cmd = true;
 
-    if (check_correct_cmd == false)
+    StructCmd* current_cmd = (StructCmd*)bsearch(&cmdStr_hash, all_cmd,
+                                                 NUM_OF_CMDS, sizeof(StructCmd),
+                                                 BinSearchComparator);
+
+    if (current_cmd == NULL) {
+        check_correct_cmd = false;
         return check_correct_cmd;
-
-    else if (all_cmd[index].arg == no_arg) {
-
-        check_correct_cmd = InsertNoArgFuncInBuffer(buffer,
-                                                    pc, all_cmd[index]);
-
     }
 
-    else if (all_cmd[index].arg == registr_arg) {
+    switch(current_cmd->arg)
+    {
+        case no_arg:
 
-        check_correct_cmd = InsertRegFuncInBuffer(line, buffer,
-                                                  pc, all_cmd[index]);
+            check_correct_cmd = InsertNoArgFuncInBuffer(buffer, pc,
+                                                        *current_cmd);
+            break;
 
-    }
+        case registr_arg:
 
-    else if (all_cmd[index].arg == numeric_arg) {
+            check_correct_cmd = InsertRegFuncInBuffer(line, buffer,
+                                                      pc, *current_cmd);
+            break;
 
-        check_correct_cmd = InsertPushFuncInBuffer(line, buffer,
-                                                   pc, all_cmd[index]);
+        case numeric_arg:
 
-    }
+            check_correct_cmd = InsertPushFuncInBuffer(line, buffer,
+                                                       pc, *current_cmd);
+            break;
 
-    else if (all_cmd[index].arg == jmp_arg) {
+        case jmp_arg:
 
-        check_correct_cmd = InsertJumpFuncInBuffer(line, buffer,
-                                                   pc, labels, all_cmd[index]);
+            check_correct_cmd = InsertJumpFuncInBuffer(line, buffer,
+                                                       pc, labels, *current_cmd);
+            break;
+
+        default:
+             check_correct_cmd = false;
+             break;
+
     }
 
     return check_correct_cmd;
@@ -371,6 +380,17 @@ int DetectLabel(const char* cmdStr, int labels[], int pc)
     return 0;
 }
 
+unsigned long long GetHash(const char* cmd_name)
+{
+    unsigned long long hash = 5381;
+    int sym = 0;
+
+    while ((sym = *cmd_name++)) {
+        hash = ((hash << 5) + hash) + sym;
+    }
+
+    return hash;
+}
 
 void SetDefaultLabels(int labels[])
 {
@@ -381,4 +401,38 @@ void SetDefaultLabels(int labels[])
     for (int i = 0; i < NUM_OF_LABELS; ++i) {
         labels[i] = DEFAULT_LABEL;
     }
+}
+
+int StructCmdComparator(const void* param1, const void* param2)
+{
+    assert(param1 != NULL);
+    assert(param2 != NULL);
+
+    const StructCmd* cmd1 = (const StructCmd*)param1;
+    const StructCmd* cmd2 = (const StructCmd*)param2;
+
+    if (cmd1->hash < cmd2->hash)
+        return -1;
+
+    else if (cmd1->hash == cmd2->hash)
+        return 0;
+
+    return 1;
+}
+
+int BinSearchComparator(const void* param1, const void* param2)
+{
+    assert(param1 != NULL);
+    assert(param2 != NULL);
+
+    const unsigned long long* value = (const unsigned long long* )param1;
+    const StructCmd* cmd = (const StructCmd*)param2;
+
+    if (*value < cmd->hash)
+        return -1;
+
+    else if (*value == cmd->hash)
+        return 0;
+
+    return 1;
 }

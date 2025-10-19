@@ -117,6 +117,7 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         bool check_correct_cmd = false;
 
         for (int index = 0; index < NUM_OF_CMDS; ++index) {
+
             if (all_cmd[index].cmd == spu->buffer.code_arr[spu->pc]) {
 
                 if (all_cmd[index].cmd_function(spu, all_cmd[index].cmd)){

@@ -5,7 +5,7 @@ const int NUM_OF_LABELS = 100;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
-int GetHash(const char* cmd_name);
+unsigned long long GetHash(const char* cmd_name);
 
 int DetectLabel(const char* cmdStr, int labels[], int pc);
 
@@ -43,5 +43,9 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
                       int labels[], int* pc);
 
 void SetDefaultLabels(int labels[]);
+
+int StructCmdComparator(const void* param1, const void* param2);
+
+int BinSearchComparator(const void* param1, const void* param2);
 
 #endif
