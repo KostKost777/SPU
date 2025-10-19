@@ -97,7 +97,11 @@ int AsmReadCmdFromFile(struct Buffer* buffer)
     buffer->code_arr[0] = SIGNATURE;
     buffer->code_arr[1] = VERSION;
 
-    int labels[NUM_OF_LABELS] = {};
+
+    printf("SIZE: %u\n", NUM_OF_LABELS);
+    int* labels = (int*)calloc(NUM_OF_LABELS, sizeof(int));
+
+    assert(labels);
 
     SetDefaultLabels(labels);
 
@@ -106,6 +110,7 @@ int AsmReadCmdFromFile(struct Buffer* buffer)
             return 1;
     }
 
+    free(labels);
     return 0;
 }
 
@@ -181,7 +186,7 @@ int GetRegIndex(const char* str_with_reg)
 }
 
 int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, int labels[], StructCmd cmd_struct)
+                           int* pc, int* labels, StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
@@ -190,19 +195,39 @@ int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
 
     int arg = 0;
 
-    if (sscanf(str_with_arg, "%*s :%d", &arg) == 0)
-        return 0;
-
-    *pc+=2;
-
-    fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s\n",
-                       *pc, cmd_struct.cmd, labels[arg],
-                       cmd_struct.name);
-
     EmitInArr(buffer, cmd_struct.cmd);
-    EmitInArr(buffer, labels[arg]);
 
-    return 1;
+    if (sscanf(str_with_arg, "%*s :%d", &arg)) {
+
+        EmitInArr(buffer, labels[arg]);
+
+        *pc+=2;
+
+        fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s :%d\n",
+                           *pc, cmd_struct.cmd, labels[arg],
+                           cmd_struct.name, arg);
+        return 1;
+    }
+
+    const int STR_LABEL_LEN = 100;
+
+    char str_label[STR_LABEL_LEN]= "";
+
+    if (sscanf(str_with_arg, "%*s :%s", str_label)) {
+
+        printf("STR: %s   ARG:  %d\n", str_label, labels[GetHash(str_label)]);
+
+        EmitInArr(buffer, labels[GetHash(str_label)]);
+
+        *pc+=2;
+
+        fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %s\n",
+                           *pc, cmd_struct.cmd, labels[GetHash(str_label)],
+                           cmd_struct.name, str_label);
+        return 1;
+    }
+
+    return 0;
 }
 
 int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
@@ -246,12 +271,12 @@ int InsertNoArgFuncInBuffer(struct Buffer* buffer,
 }
 
 int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
-                  int labels[])
+                  int* labels)
 {
     assert(buffer != NULL);
     assert(labels != NULL);
 
-    const int MAXCMDLEN = 10;
+    const int MAXCMDLEN = 100;
     char cmdStr[MAXCMDLEN] = "";
 
     int pc = 0;
@@ -268,7 +293,7 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
 
         int status = sscanf(now_line, "%s", cmdStr);
 
-        // printf("NOW FUNC: (%s)\n", cmdStr);
+         //printf("NOW FUNC: (%s)\n", cmdStr);
         // printf("STATUS: %d\n\n", status);
 
         if (DetectLabel(cmdStr, labels, pc)) {
@@ -305,14 +330,14 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
 
 bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
-                      int labels[], int* pc)
+                      int* labels, int* pc)
 {
     assert(buffer != NULL);
     assert(line != NULL);
     assert(pc != NULL);
     assert(cmdStr != NULL);
 
-    unsigned long long cmdStr_hash = GetHash(cmdStr);
+    size_t cmdStr_hash = GetHash(cmdStr);
 
     //printf("Hash: %s - %u\n", cmdStr, cmdStr_hash);
 
@@ -362,17 +387,54 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     return check_correct_cmd;
 }
 
-int DetectLabel(const char* cmdStr, int labels[], int pc)
+int DetectLabel(const char* cmdStr, int* labels, int pc)
 {
     assert(cmdStr != NULL);
     assert(labels != NULL);
 
-    if (cmdStr[0] == ':') {
-        int arg = 0;
+    if (cmdStr[0] != ':')
+        return 0;
 
-        sscanf(cmdStr, ":%d", &arg);
+    if (DetectNumericLabel(cmdStr, labels, pc))
+        return 1;
 
+    if (DetectStringLabel(cmdStr, labels, pc))
+        return 1;
+
+    return 0;
+}
+
+int DetectNumericLabel(const char* cmdStr, int* labels, int pc)
+{
+    assert(cmdStr != NULL);
+    assert(labels != NULL);
+
+    int arg = 0;
+
+    int status = sscanf(cmdStr, ":%d", &arg);
+
+    if (status == 1) {
         labels[arg] = pc;
+        return 1;
+    }
+
+    return 0;
+}
+
+int DetectStringLabel(const char* cmdStr, int* labels, int pc)
+{
+    assert(cmdStr != NULL);
+    assert(labels != NULL);
+
+    const int MAX_STR_LABEL_LEN = 100;
+
+    char str_label[MAX_STR_LABEL_LEN] = "";
+
+    int status = sscanf(cmdStr, ":%s", str_label);
+
+    if (status == 1) {
+
+        labels[GetHash(str_label)] = pc;
 
         return 1;
     }
@@ -380,25 +442,25 @@ int DetectLabel(const char* cmdStr, int labels[], int pc)
     return 0;
 }
 
-unsigned long long GetHash(const char* cmd_name)
+size_t GetHash(const char* cmd_name)
 {
-    unsigned long long hash = 5381;
+    size_t hash = 5381;
     int sym = 0;
 
     while ((sym = *cmd_name++)) {
-        hash = ((hash << 5) + hash) + sym;
+        hash = (((hash << 5) + hash) + sym) % NUM_OF_LABELS;
     }
 
     return hash;
 }
 
-void SetDefaultLabels(int labels[])
+void SetDefaultLabels(int* labels)
 {
     assert(labels != NULL);
 
     const int DEFAULT_LABEL = -1;
 
-    for (int i = 0; i < NUM_OF_LABELS; ++i) {
+    for (size_t i = 0; i < NUM_OF_LABELS; ++i) {
         labels[i] = DEFAULT_LABEL;
     }
 }
@@ -425,7 +487,7 @@ int BinSearchComparator(const void* param1, const void* param2)
     assert(param1 != NULL);
     assert(param2 != NULL);
 
-    const unsigned long long* value = (const unsigned long long* )param1;
+    const size_t* value = (const size_t* )param1;
     const StructCmd* cmd = (const StructCmd*)param2;
 
     if (*value < cmd->hash)

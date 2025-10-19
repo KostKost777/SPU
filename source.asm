@@ -1,33 +1,35 @@
 PUSH 50
-POPREG DX     ;в DX храниться размер стороны квадрата
+POPREG DX                       ;в DX храниться размер стороны квадрата
 PUSH -1
 POPREG AX
 PUSH 11
-POPREG GX     ;РАДИУС КРУГА
-CALL :2       ;СЧИТАЕМ КООРДИНАТЫ ЦЕНТРА КРУГА
+POPREG GX                       ;РАДИУС КРУГА
+CALL :CountRadius               ;СЧИТАЕМ КООРДИНАТЫ ЦЕНТРА КРУГА
 
-:1
+:While_Ax_<_100
+
     PUSHREG AX
     PUSH 1
     ADD
     POPREG AX
-    CALL :3                 ;ПРОВЕРКА ПРИНАДЛЕЖИТ ЛИ ТОЧКА ОКРУЖНОСТИ
+    CALL :CheckDot                  ;ПРОВЕРКА ПРИНАДЛЕЖИТ ЛИ ТОЧКА ОКРУЖНОСТИ
     PUSH 1
     JNE :5
-        CALL :6             ;РАССЧЕТ ПОЗИЦИИ КУДА НAДО ПОСТАВИТЬ ТОЧКУ
+        CALL :GetDotCoord            ;РАССЧЕТ ПОЗИЦИИ КУДА НAДО ПОСТАВИТЬ ТОЧКУ
         PUSH 46
         POPM [HX]
-    :5                      ;ЕСЛИ ТОЧКУ НЕ НАДО ПЕЧАТАТЬ
-    CALL :7                 ;ОБНОВЛЕНИЕ ЗНАЧЕНИЙ CX И BX
+    :5                               ;ЕСЛИ ТОЧКУ НЕ НАДО ПЕЧАТАТЬ
+    CALL :SetNextDot                 ;ОБНОВЛЕНИЕ ЗНАЧЕНИЙ CX И BX
     PUSHREG AX
     PUSHREG DX
     PUSHREG DX
     MUL
-JB :1
-DRAW
-HLT                 ;КОНЕЦ
 
-:3                  ;ПРОВЕРКА ПРИНАДЛЕЖИТ ЛИ ТОЧКА ОКРУЖНОСТИ
+JB :While_Ax_<_100
+DRAW
+HLT                             ;КОНЕЦ
+
+:CheckDot                       ;ПРОВЕРКА ПРИНАДЛЕЖИТ ЛИ ТОЧКА ОКРУЖНОСТИ
     PUSHREG BX
     PUSHREG EX
     SUB
@@ -58,7 +60,7 @@ HLT                 ;КОНЕЦ
     PUSH 1
     RET
 
-:2            ; СЧИТАЕМ КООРДИНАТЫ ЦЕНТРА КРУГА
+:CountRadius                ; СЧИТАЕМ КООРДИНАТЫ ЦЕНТРА КРУГА
     PUSHREG DX
     PUSH 2
     DIV
@@ -69,7 +71,7 @@ HLT                 ;КОНЕЦ
     POPREG FX
     RET
 
-:6              ;РАССЧЕТ ПОЗИЦИИ КУДА НАДО ПОСТАВИТЬ ТОЧКУ
+:GetDotCoord                ;РАССЧЕТ ПОЗИЦИИ КУДА НАДО ПОСТАВИТЬ ТОЧКУ
     PUSHREG CX
     PUSHREG DX
     MUL
@@ -78,21 +80,21 @@ HLT                 ;КОНЕЦ
     POPREG HX
     RET
 
-:7
+:SetNextDot
     PUSHREG BX
     PUSH 1
     ADD
     POPREG BX
-    CALL :8      ;ПРОВЕРКА ЧТО BX МЕНЬШЕ 10
+    CALL :Check_BX             ;ПРОВЕРКА ЧТО BX МЕНЬШЕ 10
     RET
 
-:8
+:Check_BX
     PUSHREG BX
     PUSHREG DX
-    JE :9
+    JE :SetNew_BX_CX
     RET
 
-:9
+:SetNew_BX_CX
     PUSH 0
     POPREG BX
     PUSH 1

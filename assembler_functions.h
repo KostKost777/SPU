@@ -1,13 +1,17 @@
 #ifndef TRANSLATOR
 #define TRANSLATOR
 
-const int NUM_OF_LABELS = 100;
+const size_t NUM_OF_LABELS = 100000000;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
-unsigned long long GetHash(const char* cmd_name);
+size_t GetHash(const char* cmd_name);
 
-int DetectLabel(const char* cmdStr, int labels[], int pc);
+int DetectLabel(const char* cmdStr, int* labels, int pc);
+
+int DetectNumericLabel(const char* cmdStr, int* labels, int pc);
+
+int DetectStringLabel(const char* cmdStr, int* labels, int pc);
 
 int AsmPrintLogs(const char* message, size_t line);
 
@@ -25,7 +29,7 @@ int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
                            int* pc, StructCmd cmd_struct);
 
 int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, int labels[], StructCmd cmd_struct);
+                           int* pc, int* labels, StructCmd cmd_struct);
 
 int InsertRegFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
                           int* pc, StructCmd cmd_struct);
@@ -36,13 +40,13 @@ int InsertNoArgFuncInBuffer(struct Buffer* buffer,
 int GetRegIndex(const char* str_with_reg);
 
 int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
-                  int labels[]);
+                  int* labels);
 
 bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
-                      int labels[], int* pc);
+                      int* labels, int* pc);
 
-void SetDefaultLabels(int labels[]);
+void SetDefaultLabels(int* labels);
 
 int StructCmdComparator(const void* param1, const void* param2);
 

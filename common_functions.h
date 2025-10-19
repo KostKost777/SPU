@@ -52,7 +52,7 @@ struct StructCmd {
     const int cmd;
     const ArgType arg;
     const SPU_func_ptr cmd_function;
-    unsigned long long hash;
+    size_t hash;
 };
 
 const int NUM_OF_CMDS = 23;
