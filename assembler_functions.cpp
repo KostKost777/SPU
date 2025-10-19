@@ -10,7 +10,7 @@
 
 FILE* lst_file = fopen("listing.lst", "w");
 
-const char* source_file_name = "source.asm";
+const char* source_file_name = "quadratic.asm";
 
 int AsmPrintLogs(const char* message, size_t line)
 {
@@ -33,22 +33,6 @@ int AsmPrintLogs(const char* message, size_t line)
 
     return 0;
 }
-
-int BufferCtor(struct Buffer* buffer)
-{
-    assert(buffer != NULL);
-
-    buffer->code_arr = (int*)calloc(BUFFER_CAPACITY, sizeof(int));
-
-    if (buffer->code_arr == NULL) {
-        PRINT_LOGS("Didn`t allocate memory for buffer");
-        return 1;
-    }
-
-    buffer->size = HEADER_OFFSET;
-    return 0;
-}
-
 
 int AsmWriteCmdInFile(struct Buffer* buffer)
 {
@@ -96,19 +80,10 @@ void AsmEndProcessing(struct Buffer* buffer)
 
     BufferDtor(buffer);
 
-    fclose(log_file);
     fclose(lst_file);
 }
 
-void BufferDtor(struct Buffer* buffer)
-{
-    assert(buffer != NULL);
-
-    free(buffer->code_arr);
-    buffer->code_arr = NULL;
-
-    buffer->size = 0;
-}
+//ATEXIT
 
 int AsmReadCmdFromFile(struct Buffer* buffer)
 {
@@ -279,7 +254,6 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
     const int MAXCMDLEN = 10;
     char cmdStr[MAXCMDLEN] = "";
 
-    int arg = 0;
     int pc = 0;
     int source_line_count = 1;
 
@@ -290,19 +264,18 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
         bool check_correct_cmd = false;
 
         const char* now_line = Asmtext.poem_ptr_array[i].line_ptr;
+        // printf("%s\n", now_line);
 
-        if (sscanf(now_line, " :%d", &arg) == 1) {
+        int status = sscanf(now_line, " %s", cmdStr);
 
-            // printf("ARG: :%d\n", arg);
-            labels[arg] = pc;
+        // printf("NOW FUNC: (%s)\n", cmdStr);
+        // printf("STATUS: %d\n\n", status);
+
+        if (DetectLabel(cmdStr, labels, pc)) {
+            //printf("LINE: %d\n", source_line_count);
             source_line_count++;
             continue;
         }
-
-        int status = sscanf(now_line, "%s", cmdStr);
-
-        //    printf("NOW FUNC: %s\n", cmdStr);
-        //    printf("STATUS: %d\n\n", status);
 
         if (status == EOF){
             PRINT_LOGS("END OF FILE");
@@ -318,7 +291,7 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
                                              cmdStr, labels, &pc);
 
         if (check_correct_cmd == false) {
-            AsmPrintLogs("Invalid command", source_line_count);
+            AsmPrintLogs("Invalid command))))", source_line_count);
             return 1;
         }
 
@@ -341,7 +314,7 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     for (; index < NUM_OF_CMDS; ++index) {
 
         if (strcmp(all_cmd[index].name, cmdStr) == 0) {
-            //printf("cmdStr: %s\n", cmdStr);
+            printf("cmdStr: %s\n", cmdStr);
             check_correct_cmd = true;
             break;
         }
@@ -378,6 +351,24 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     }
 
     return check_correct_cmd;
+}
+
+int DetectLabel(const char* cmdStr, int labels[], int pc)
+{
+    assert(cmdStr != NULL);
+    assert(labels != NULL);
+
+    if (cmdStr[0] == ':') {
+        int arg = 0;
+
+        sscanf(cmdStr, ":%d", &arg);
+
+        labels[arg] = pc;
+
+        return 1;
+    }
+
+    return 0;
 }
 
 

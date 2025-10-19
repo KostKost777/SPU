@@ -119,11 +119,9 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         for (int index = 0; index < NUM_OF_CMDS; ++index) {
             if (all_cmd[index].cmd == spu->buffer.code_arr[spu->pc]) {
 
-                all_cmd[index].cmd_function(spu, all_cmd[index].cmd);
-
-                if (all_cmd[index].cmd == cmdHLT){
+                if (all_cmd[index].cmd_function(spu, all_cmd[index].cmd)){
                     //SPUdump(spu);
-                    return 0;
+                    break;
                 }
 
                 check_correct_cmd = true;
@@ -142,7 +140,7 @@ int SPURunCmdFromBuffer(struct SPU* spu)
     return 0;
 }
 
-void BinaryArifmeticFuncs(struct SPU* spu, int cmd)
+int BinaryArifmeticFuncs(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -162,6 +160,7 @@ void BinaryArifmeticFuncs(struct SPU* spu, int cmd)
         case cmdDIV:
             if (elem1 == 0) {
                 PRINT_LOGS("You can`t divide by zero");
+                return 1;
             }
             else
                 StackPush(&spu->stk, elem2 / elem1);
@@ -169,10 +168,12 @@ void BinaryArifmeticFuncs(struct SPU* spu, int cmd)
             break;
 
         default: PRINT_LOGS("Unknown command");
+                 return 1;
     }
+    return 0;
 }
 
-void ConditionalJumps(struct SPU* spu, int cmd)
+int ConditionalJumps(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -213,10 +214,13 @@ void ConditionalJumps(struct SPU* spu, int cmd)
             break;
 
         default: PRINT_LOGS("Unknown command");
+                 return 1;
     }
+
+    return 0;
 }
 
-void RegFuncs(struct SPU* spu, int cmd)
+int RegFuncs(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -231,10 +235,13 @@ void RegFuncs(struct SPU* spu, int cmd)
                          break;
 
         default: PRINT_LOGS("Unknown command");
+                 return 1;
     }
+
+    return 0;
 }
 
-void MemFuncs(struct SPU* spu, int cmd)
+int MemFuncs(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -252,10 +259,13 @@ void MemFuncs(struct SPU* spu, int cmd)
                        break;
 
         default: PRINT_LOGS("Unknown command");
+                 return 1;
     }
+
+    return 0;
 }
 
-void Push(struct SPU* spu, int cmd)
+int Push(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -264,9 +274,11 @@ void Push(struct SPU* spu, int cmd)
     int arg = spu->buffer.code_arr[++spu->pc];
 
     StackPush(&spu->stk, arg);
+
+    return 0;
 }
 
-void Jmp(struct SPU* spu, int cmd)
+int Jmp(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -275,9 +287,11 @@ void Jmp(struct SPU* spu, int cmd)
     int arg = spu->buffer.code_arr[++spu->pc] - 1;
 
     spu->pc = arg;
+
+    return 0;
 }
 
-void Call(struct SPU* spu, int cmd)
+int Call(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -288,18 +302,22 @@ void Call(struct SPU* spu, int cmd)
     StackPush(&spu->ret_stk, spu->pc);
 
     spu->pc =  arg;
+
+    return 0;
 }
 
-void Hlt(struct SPU* spu, int cmd)
+int Hlt(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
     (void)cmd;
 
-    printf("End SPU");
+    printf("End of programm\n");
+
+    return 1;
 }
 
-void Ret(struct SPU* spu, int cmd)
+int Ret(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -310,9 +328,11 @@ void Ret(struct SPU* spu, int cmd)
     StackPop(&spu->ret_stk, &last_ret);
 
     spu->pc = last_ret;
+
+    return 0;
 }
 
-void Draw(struct SPU* spu, int cmd)
+int Draw(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -328,9 +348,11 @@ void Draw(struct SPU* spu, int cmd)
         if ((i + 1) % RAM_SIDE_LEN == 0)
             printf("\n");
     }
+
+    return 0;
 }
 
-void In(struct SPU* spu, int cmd)
+int In(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
     (void)cmd;
@@ -346,9 +368,11 @@ void In(struct SPU* spu, int cmd)
     }
 
     StackPush(&spu->stk, value);
+
+    return 0;
 }
 
-void Sqvrt(struct SPU* spu, int cmd)
+int Sqvrt(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -358,10 +382,17 @@ void Sqvrt(struct SPU* spu, int cmd)
 
     StackPop(&spu->stk, &elem);
 
+    if (elem < 0) {
+        PRINT_LOGS("You can`t take sqrt from negative number");
+        return 1;
+    }
+
     StackPush(&spu->stk,(int)sqrt(elem));
+
+    return 0;
 }
 
-void Out(struct SPU* spu, int cmd)
+int Out(struct SPU* spu, int cmd)
 {
     assert(spu != NULL);
 
@@ -372,6 +403,8 @@ void Out(struct SPU* spu, int cmd)
     StackPop(&spu->stk, &elem);
 
     printf("Answer is: %d\n", elem);
+
+    return 0;
 }
 
 void SPUdump(struct SPU* spu)

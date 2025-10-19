@@ -40,31 +40,31 @@ int SPUReadCmdFromFile(struct SPU* spu);
 
 int SPURunCmdFromBuffer(struct SPU* spu);
 
-void Push(struct SPU* spu, int cmd);
+int Push(struct SPU* spu, int cmd);
 
-void Jmp(struct SPU* spu, int cmd);
+int Jmp(struct SPU* spu, int cmd);
 
-void ConditionalJumps(struct SPU* spu, int cmd);
+int ConditionalJumps(struct SPU* spu, int cmd);
 
-void In(struct SPU* spu, int cmd);
+int In(struct SPU* spu, int cmd);
 
-void Draw(struct SPU* spu, int cmd);
+int Draw(struct SPU* spu, int cmd);
 
-void Hlt(struct SPU* spu, int cmd);
+int Hlt(struct SPU* spu, int cmd);
 
-void Call(struct SPU* spu, int cmd);
+int Call(struct SPU* spu, int cmd);
 
-void Ret(struct SPU* spu, int cmd);
+int Ret(struct SPU* spu, int cmd);
 
-void RegFuncs(struct SPU* spu, int cmd);
+int RegFuncs(struct SPU* spu, int cmd);
 
-void MemFuncs(struct SPU* spu, int cmd);
+int MemFuncs(struct SPU* spu, int cmd);
 
-void BinaryArifmeticFuncs(struct SPU* spu, int cmd);
+int BinaryArifmeticFuncs(struct SPU* spu, int cmd);
 
-void Out(struct SPU* spu, int cmd);
+int Out(struct SPU* spu, int cmd);
 
-void Sqvrt(struct SPU* spu, int cmd);
+int Sqvrt(struct SPU* spu, int cmd);
 
 #define GET_TWO_ELEM(stk)           \
     StackValueType elem1 = 0;       \

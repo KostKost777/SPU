@@ -45,7 +45,7 @@ enum ArgType
     numeric_arg
 };
 
-typedef void (*SPU_func_ptr)(struct SPU* spu, int cmd);
+typedef int (*SPU_func_ptr)(struct SPU* spu, int cmd);
 
 struct StructCmd {
     const char* name;
@@ -66,7 +66,13 @@ struct Buffer
     size_t size;
 };
 
+void BufferDtor(struct Buffer* buffer);
+
+int BufferCtor(struct Buffer* buffer);
+
 int ReadCmdFromBinFile(struct Buffer* buffer);
+
+void CloseLogFile();
 
 extern StructCmd all_cmd[NUM_OF_CMDS];
 

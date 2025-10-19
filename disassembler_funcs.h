@@ -1,8 +1,11 @@
-#ifndef DISTRAN
-#define DISTRAN
+#ifndef DisAsm
+#define DisAsm
 
-int DistranWriteCmdInFile(struct Buffer* buffer);
+int DisAsmWriteCmdInFile(struct Buffer* buffer);
 
-void DistranEndProcessing();
+int DisAsmProcessingCmd(struct Buffer* buffer, struct StructCmd command,
+                        size_t* index);
+
+void DisAsmEndProcessing(struct Buffer* buffer);
 
 #endif

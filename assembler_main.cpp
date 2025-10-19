@@ -10,6 +10,8 @@
 
 int main()
 {
+    atexit(CloseLogFile);
+
     struct Buffer buffer = {};
 
     if (BufferCtor(&buffer)) {

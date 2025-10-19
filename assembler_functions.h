@@ -5,11 +5,9 @@ const int NUM_OF_LABELS = 100;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
+int DetectLabel(const char* cmdStr, int labels[], int pc);
+
 int AsmPrintLogs(const char* message, size_t line);
-
-void BufferDtor(struct Buffer* buffer);
-
-int BufferCtor(struct Buffer* buffer);
 
 int AsmWriteCmdInFile(struct Buffer* buffer);
 

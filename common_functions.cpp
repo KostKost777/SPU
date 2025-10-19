@@ -19,7 +19,7 @@ StructCmd all_cmd[NUM_OF_CMDS] =
 {"SUB",         cmdSUB,          no_arg,        BinaryArifmeticFuncs},
 {"DIV",         cmdDIV,          no_arg,        BinaryArifmeticFuncs},
 {"MUL",         cmdMUL,          no_arg,        BinaryArifmeticFuncs},
-{"IN",         cmdIN,           no_arg,         In},
+{"IN",          cmdIN,           no_arg,         In},
 {"HLT",         cmdHLT,          no_arg,        Hlt},
 {"OUT",         cmdOUT,          no_arg,        Out},
 {"SQVRT",       cmdSQVRT,        no_arg,        Sqvrt},
@@ -71,3 +71,36 @@ int ReadCmdFromBinFile(struct Buffer* buffer)
 
     return 0;
 }
+
+int BufferCtor(struct Buffer* buffer)
+{
+    assert(buffer != NULL);
+
+    buffer->code_arr = (int*)calloc(BUFFER_CAPACITY, sizeof(int));
+
+    if (buffer->code_arr == NULL) {
+        PRINT_LOGS("Didn`t allocate memory for buffer");
+        return 1;
+    }
+
+    buffer->size = HEADER_OFFSET;
+    return 0;
+}
+
+void BufferDtor(struct Buffer* buffer)
+{
+    assert(buffer != NULL);
+
+    free(buffer->code_arr);
+    buffer->code_arr = NULL;
+
+    buffer->size = 0;
+}
+
+void CloseLogFile()
+{
+    fclose(log_file);
+    printf("Close\n");
+}
+
+

@@ -7,6 +7,8 @@
 
 int main()
 {
+    atexit(CloseLogFile);
+
     struct SPU spu = {};
 
     SPUCtor(&spu);
@@ -27,6 +29,8 @@ int main()
     }
 
     SPUDtor(&spu);
+
+    printf("End SPU\n");
 
     return 0;
 }
