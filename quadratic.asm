@@ -6,60 +6,65 @@ IN
 POPREG CX
 PUSHREG AX
 PUSH 0
+
 JE :1
-PUSH 0          ;если А != 0
-PUSHREG BX
+    PUSH 0          ;если А != 0
+    PUSHREG BX
+
 JE :2
-PUSHREG CX      ;если В != 0 и А != 0
-PUSH 0
+    PUSHREG CX      ;если В != 0 и А != 0
+    PUSH 0
+
 JE :3
-PUSHREG BX      ;если С != 0 и В != 0 и А != 0
-PUSHREG BX
-MUL
-PUSHREG AX
-PUSHREG CX
-PUSH 4
-MUL
-MUL
-SUB
-POPREG DX
-PUSHREG DX
-PUSH 0
+    PUSHREG BX      ;если С != 0 и В != 0 и А != 0
+    PUSHREG BX
+    MUL
+    PUSHREG AX
+    PUSHREG CX
+    PUSH 4
+    MUL
+    MUL
+    SUB
+    POPREG DX
+    PUSHREG DX
+    PUSH 0
+
 JB :4
-PUSHREG DX          ;дискр >= 0
-PUSH 0
+    PUSHREG DX          ;дискр >= 0
+    PUSH 0
+
 JE :5
-PUSHREG BX          ;дискр > 0
-PUSH -1
-MUL
-PUSHREG DX
-SQVRT
-ADD
-PUSH 2
-DIV
-PUSHREG AX
-DIV
-POPREG EX
-PUSHREG BX
-PUSH -1
-MUL
-PUSHREG DX
-SQVRT
-SUB
-PUSH 2
-DIV
-PUSHREG AX
-DIV
-POPREG FX
-PUSH 2
-POPREG GX
-PUSHREG GX
-OUT
-PUSHREG EX
-OUT
-PUSHREG FX
-OUT
-HLT
+    PUSHREG BX          ;дискр > 0
+    PUSH -1
+    MUL
+    PUSHREG DX
+    SQVRT
+    ADD
+    PUSH 2
+    DIV
+    PUSHREG AX
+    DIV
+    POPREG EX
+    PUSHREG BX
+    PUSH -1
+    MUL
+    PUSHREG DX
+    SQVRT
+    SUB
+    PUSH 2
+    DIV
+    PUSHREG AX
+    DIV
+    POPREG FX
+    PUSH 2
+    POPREG GX
+    PUSHREG GX
+    OUT
+    PUSHREG EX
+    OUT
+    PUSHREG FX
+    OUT
+    HLT
 
 :5              ;дискр == 0
     PUSHREG BX
@@ -183,3 +188,4 @@ HLT
     PUSH 0
     OUT
     HLT
+

@@ -10,7 +10,7 @@
 
 FILE* lst_file = fopen("listing.lst", "w");
 
-const char* source_file_name = "quadratic.asm";
+const char* source_file_name = "factorial.asm";
 
 int AsmPrintLogs(const char* message, size_t line)
 {
@@ -264,9 +264,9 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
         bool check_correct_cmd = false;
 
         const char* now_line = Asmtext.poem_ptr_array[i].line_ptr;
-        // printf("%s\n", now_line);
+         //printf("%s\n", now_line);
 
-        int status = sscanf(now_line, " %s", cmdStr);
+        int status = sscanf(now_line, "%s", cmdStr);
 
         // printf("NOW FUNC: (%s)\n", cmdStr);
         // printf("STATUS: %d\n\n", status);
@@ -314,7 +314,7 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     for (; index < NUM_OF_CMDS; ++index) {
 
         if (strcmp(all_cmd[index].name, cmdStr) == 0) {
-            printf("cmdStr: %s\n", cmdStr);
+            //printf("cmdStr: %s\n", cmdStr);
             check_correct_cmd = true;
             break;
         }

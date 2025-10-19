@@ -14,6 +14,7 @@ int main()
 
     struct Buffer buffer = {};
 
+
     if (BufferCtor(&buffer)) {
         AsmEndProcessing(&buffer);
         return 1;

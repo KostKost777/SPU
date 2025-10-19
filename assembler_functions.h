@@ -5,6 +5,8 @@ const int NUM_OF_LABELS = 100;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
+int GetHash(const char* cmd_name);
+
 int DetectLabel(const char* cmdStr, int labels[], int pc);
 
 int AsmPrintLogs(const char* message, size_t line);
