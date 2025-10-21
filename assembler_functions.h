@@ -5,8 +5,6 @@ const size_t NUM_OF_LABELS = 100000000;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
-size_t GetHash(const char* cmd_name);
-
 int DetectLabel(const char* cmdStr, int* labels, int pc);
 
 int DetectNumericLabel(const char* cmdStr, int* labels, int pc);
