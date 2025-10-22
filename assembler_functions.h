@@ -1,15 +1,25 @@
 #ifndef TRANSLATOR
 #define TRANSLATOR
 
-const size_t NUM_OF_LABELS = 100000000;
+const size_t LABELS_ARR_CAPACITY = 100;
+
+struct StructLabel
+{
+    size_t label_hash;
+    int label_pc;
+};
+
+struct StructLabelsArr
+{
+    struct StructLabel arr[LABELS_ARR_CAPACITY];
+    size_t size;
+};
+
+extern const char* source_file_name;
 
 extern const char* reg_name_arr[NUMBER_OF_REGS];
 
-int DetectLabel(const char* cmdStr, int* labels, int pc);
-
-int DetectNumericLabel(const char* cmdStr, int* labels, int pc);
-
-int DetectStringLabel(const char* cmdStr, int* labels, int pc);
+int DetectLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc);
 
 int AsmPrintLogs(const char* message, size_t line);
 
@@ -27,7 +37,8 @@ int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
                            int* pc, StructCmd cmd_struct);
 
 int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, int* labels, StructCmd cmd_struct);
+                           int* pc, struct StructLabelsArr*,
+                           StructCmd cmd_struct);
 
 int InsertRegFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
                           int* pc, StructCmd cmd_struct);
@@ -38,16 +49,22 @@ int InsertNoArgFuncInBuffer(struct Buffer* buffer,
 int GetRegIndex(const char* str_with_reg);
 
 int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
-                  int* labels);
+                  struct StructLabelsArr*);
 
 bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
-                      int* labels, int* pc);
+                      struct StructLabelsArr*, int* pc);
 
-void SetDefaultLabels(int* labels);
+void SetDefaultLabels(struct StructLabel arr[]);
 
-int StructCmdComparator(const void* param1, const void* param2);
+int StructCmdComparatorByHash(const void* param1, const void* param2);
 
-int BinSearchComparator(const void* param1, const void* param2);
+int StructCmdComparatorByCmdEnum(const void* param1, const void* param2);
+
+int BinSearchComparatorForCmd(const void* param1, const void* param2);
+
+int BinSearchComparatorForLabel(const void* param1, const void* param2);
+
+int StructLabelComparator(const void* param1, const void* param2);
 
 #endif

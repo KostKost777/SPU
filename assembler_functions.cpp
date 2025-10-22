@@ -8,9 +8,9 @@
 
 #include "assembler_functions.h"
 
-FILE* lst_file = fopen("listing.lst", "w");
+const char* source_file_name;
 
-const char* source_file_name = "..\\SOURCE\\source.asm";
+FILE* lst_file = fopen("listing.lst", "w");
 
 int AsmPrintLogs(const char* message, size_t line)
 {
@@ -40,7 +40,7 @@ int AsmWriteCmdInFile(struct Buffer* buffer)
     assert(buffer != NULL);
     assert(buffer->code_arr != NULL);
 
-    FILE* bin_file = fopen("..\\COMMON\\binfile.txt", "w");
+    FILE* bin_file = fopen(txt_bin_file_name, "w");
 
     if (bin_file == NULL) {
         PRINT_LOGS("The bin file did not open");
@@ -60,7 +60,7 @@ int AsmWriteCmdInBinFile(struct Buffer* buffer)
     assert(buffer != NULL);
     assert(buffer->code_arr != NULL);
 
-    FILE* bin_file = fopen("..\\COMMON\\binfile.bin", "wb");
+    FILE* bin_file = fopen(bin_file_name, "wb");
 
     if (bin_file == NULL) {
         PRINT_LOGS("The bin file did not open");
@@ -97,20 +97,17 @@ int AsmReadCmdFromFile(struct Buffer* buffer)
     buffer->code_arr[0] = SIGNATURE;
     buffer->code_arr[1] = VERSION;
 
+    struct StructLabelsArr labels = {};
 
-    printf("SIZE: %u\n", NUM_OF_LABELS);
-    int* labels = (int*)calloc(NUM_OF_LABELS, sizeof(int));
+    labels.size = 0;
 
-    assert(labels);
-
-    SetDefaultLabels(labels);
+    SetDefaultLabels(labels.arr);
 
     for (int compile_iterator = 1; compile_iterator <= 2; ++compile_iterator) {
-        if (FillAsmBuffer(buffer, Asmtext, labels) == 1)
+        if (FillAsmBuffer(buffer, Asmtext, &labels) == 1)
             return 1;
     }
 
-    free(labels);
     return 0;
 }
 
@@ -186,48 +183,69 @@ int GetRegIndex(const char* str_with_reg)
 }
 
 int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, int* labels, StructCmd cmd_struct)
+                           int* pc, struct StructLabelsArr* labels,
+                           StructCmd cmd_struct)
 {
     assert(buffer != NULL);
     assert(str_with_arg != NULL);
     assert(labels != NULL);
     assert(pc != NULL);
 
-    int arg = 0;
-
     EmitInArr(buffer, cmd_struct.cmd);
 
-    if (sscanf(str_with_arg, "%*s :%d", &arg)) {
+    const int MAX_LABEL_LEN = 100;
 
-        EmitInArr(buffer, labels[arg]);
+    char str_label[MAX_LABEL_LEN]= "";
 
-        *pc+=2;
+    printf("aboba\n");
 
-        fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s :%d\n",
-                           *pc, cmd_struct.cmd, labels[arg],
-                           cmd_struct.name, arg);
-        return 1;
+    if (sscanf(str_with_arg, "%*s :%s", str_label) != 1)
+        return 0;
+
+    //printf("STR: |%s| \n", str_label);
+
+    size_t str_label_hash = GetHash(str_label);
+
+    qsort(labels->arr, labels->size,
+          sizeof(StructLabel), StructLabelComparator);
+
+    // for (size_t i = 0; i < labels->size; ++i) {
+    //     printf("LABEL_HASH: %u ---- PC: %d\n", labels->arr[i].label_hash,
+    //                                            labels->arr[i].label_pc);
+    // }
+
+    StructLabel* current_label = (StructLabel*)bsearch(
+                                                &str_label_hash, labels->arr,
+                                                labels->size,
+                                                sizeof(StructLabel),
+                                                BinSearchComparatorForLabel);
+
+    int label_pc_to_insert = -1;
+
+    if (current_label == NULL) {
+
+        //printf("Label_new_ne_metka: |%s|   HASH: %u\n  ", str_label, str_label_hash);
+
+        labels->arr[labels->size].label_hash = str_label_hash;
+        labels->arr[labels->size].label_pc = -1;
+        labels->size++;
+
     }
 
-    const int STR_LABEL_LEN = 100;
+    else {
+        //printf("label_allready_exist_in_JMP_func: |%s|\n", str_label);
+        label_pc_to_insert = current_label->label_pc;
 
-    char str_label[STR_LABEL_LEN]= "";
-
-    if (sscanf(str_with_arg, "%*s :%s", str_label)) {
-
-        printf("STR: %s   ARG:  %d\n", str_label, labels[GetHash(str_label)]);
-
-        EmitInArr(buffer, labels[GetHash(str_label)]);
-
-        *pc+=2;
-
-        fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %s\n",
-                           *pc, cmd_struct.cmd, labels[GetHash(str_label)],
-                           cmd_struct.name, str_label);
-        return 1;
     }
 
-    return 0;
+    EmitInArr(buffer, label_pc_to_insert);
+
+    *pc+=2;
+
+    fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %s\n",
+                        *pc, cmd_struct.cmd, label_pc_to_insert,
+                        cmd_struct.name, str_label);
+    return 1;
 }
 
 int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
@@ -271,7 +289,7 @@ int InsertNoArgFuncInBuffer(struct Buffer* buffer,
 }
 
 int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
-                  int* labels)
+                  struct StructLabelsArr* labels)
 {
     assert(buffer != NULL);
     assert(labels != NULL);
@@ -330,7 +348,7 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
 
 bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
-                      int* labels, int* pc)
+                      struct StructLabelsArr* labels, int* pc)
 {
     assert(buffer != NULL);
     assert(line != NULL);
@@ -345,7 +363,7 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
 
     StructCmd* current_cmd = (StructCmd*)bsearch(&cmdStr_hash, all_cmd,
                                                  NUM_OF_CMDS, sizeof(StructCmd),
-                                                 BinSearchComparator);
+                                                 BinSearchComparatorForCmd);
 
     if (current_cmd == NULL) {
         check_correct_cmd = false;
@@ -387,7 +405,7 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     return check_correct_cmd;
 }
 
-int DetectLabel(const char* cmdStr, int* labels, int pc)
+int DetectLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc)
 {
     assert(cmdStr != NULL);
     assert(labels != NULL);
@@ -395,65 +413,56 @@ int DetectLabel(const char* cmdStr, int* labels, int pc)
     if (cmdStr[0] != ':')
         return 0;
 
-    if (DetectNumericLabel(cmdStr, labels, pc))
-        return 1;
+    const int MAX_LABEL_LEN = 100;
 
-    if (DetectStringLabel(cmdStr, labels, pc))
-        return 1;
-
-    return 0;
-}
-
-int DetectNumericLabel(const char* cmdStr, int* labels, int pc)
-{
-    assert(cmdStr != NULL);
-    assert(labels != NULL);
-
-    int arg = 0;
-
-    int status = sscanf(cmdStr, ":%d", &arg);
-
-    if (status == 1) {
-        labels[arg] = pc;
-        return 1;
-    }
-
-    return 0;
-}
-
-int DetectStringLabel(const char* cmdStr, int* labels, int pc)
-{
-    assert(cmdStr != NULL);
-    assert(labels != NULL);
-
-    const int MAX_STR_LABEL_LEN = 100;
-
-    char str_label[MAX_STR_LABEL_LEN] = "";
+    char str_label[MAX_LABEL_LEN] = "";
 
     int status = sscanf(cmdStr, ":%s", str_label);
 
-    if (status == 1) {
+    size_t str_label_hash = GetHash(str_label);
 
-        labels[GetHash(str_label)] = pc;
+    if (status != 1)
+        return 0;
 
+    qsort(labels->arr, labels->size,
+          sizeof(StructLabel), StructLabelComparator);
+
+    StructLabel* current_label = (StructLabel*)bsearch(
+                                                &str_label_hash, labels->arr,
+                                                labels->size,
+                                                sizeof(StructLabel),
+                                                BinSearchComparatorForLabel);
+
+    if (current_label != NULL) {
+
+        //printf("LABEL_EXISTE_v_metke: |%s|  HASH:  %u\n", str_label, str_label_hash);
+        current_label->label_pc = pc;
         return 1;
+
     }
 
-    return 0;
+    labels->arr[labels->size].label_hash = str_label_hash;
+    labels->arr[labels->size].label_pc = pc;
+
+    //printf("LABEL_NEW_v_metke: |%s|  HASH:  %u\n", str_label, str_label_hash);
+
+    labels->size++;
+
+    return 1;
 }
 
-void SetDefaultLabels(int* labels)
+void SetDefaultLabels(struct StructLabel arr[])
 {
-    assert(labels != NULL);
+    assert(arr != NULL);
 
-    const int DEFAULT_LABEL = -1;
+    const int DEFAULT_LABEL_PC = -1;
 
-    for (size_t i = 0; i < NUM_OF_LABELS; ++i) {
-        labels[i] = DEFAULT_LABEL;
+    for (size_t i = 0; i < LABELS_ARR_CAPACITY; ++i) {
+        arr[i].label_pc = DEFAULT_LABEL_PC;
     }
 }
 
-int StructCmdComparator(const void* param1, const void* param2)
+int StructCmdComparatorByCmdEnum(const void* param1, const void* param2)
 {
     assert(param1 != NULL);
     assert(param2 != NULL);
@@ -461,16 +470,29 @@ int StructCmdComparator(const void* param1, const void* param2)
     const StructCmd* cmd1 = (const StructCmd*)param1;
     const StructCmd* cmd2 = (const StructCmd*)param2;
 
-    if (cmd1->hash < cmd2->hash)
-        return -1;
+    if (cmd1->cmd < cmd2->cmd) return -1;
 
-    else if (cmd1->hash == cmd2->hash)
-        return 0;
+    else if (cmd1->cmd == cmd2->cmd) return 0;
 
     return 1;
 }
 
-int BinSearchComparator(const void* param1, const void* param2)
+int StructCmdComparatorByHash(const void* param1, const void* param2)
+{
+    assert(param1 != NULL);
+    assert(param2 != NULL);
+
+    const StructCmd* cmd1 = (const StructCmd*)param1;
+    const StructCmd* cmd2 = (const StructCmd*)param2;
+
+    if (cmd1->hash < cmd2->hash) return -1;
+
+    else if (cmd1->hash == cmd2->hash ) return 0;
+
+    return 1;
+}
+
+int BinSearchComparatorForCmd(const void* param1, const void* param2)
 {
     assert(param1 != NULL);
     assert(param2 != NULL);
@@ -478,11 +500,39 @@ int BinSearchComparator(const void* param1, const void* param2)
     const size_t* value = (const size_t* )param1;
     const StructCmd* cmd = (const StructCmd*)param2;
 
-    if (*value < cmd->hash)
-        return -1;
+    if (*value < cmd->hash) return -1;
 
-    else if (*value == cmd->hash)
-        return 0;
+    else if (*value == cmd->hash) return 0;
+
+    return 1;
+}
+
+int BinSearchComparatorForLabel(const void* param1, const void* param2)
+{
+    assert(param1 != NULL);
+    assert(param2 != NULL);
+
+    const size_t* value = (const size_t* )param1;
+    const StructLabel* label_2 = (const StructLabel*)param2;
+
+    if (*value < label_2->label_hash) return -1;
+
+    else if (*value == label_2->label_hash) return 0;
+
+    return 1;
+}
+
+int StructLabelComparator(const void* param1, const void* param2)
+{
+    assert(param1 != NULL);
+    assert(param2 != NULL);
+
+    const StructLabel* label_1 = (const StructLabel*)param1;
+    const StructLabel* label_2 = (const StructLabel*)param2;
+
+    if (label_1->label_hash < label_2->label_hash) return -1;
+
+    else if (label_1->label_hash == label_2->label_hash) return 0;
 
     return 1;
 }

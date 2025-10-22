@@ -2,29 +2,29 @@ FLAGS= -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal
 NODEBUG = -g
 all: proc
 
-proc: SPU_main.o dump_functions.o stack_functions.o SPU_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o
-	g++ $(FLAGS) SPU_main.o dump_functions.o stack_functions.o SPU_functions.o common_functions.o MC_Onegin/read_poem_from_file_functions.o MC_Onegin\text_functions.o -o proc
+proc: SPU_main.o ..\STACK\dump_functions.o ..\STACK\stack_functions.o SPU_functions.o ..\COMMON\common_functions.o ..\MC_Onegin\read_poem_from_file_functions.o ..\MC_Onegin\text_functions.o
+	g++ $(FLAGS) SPU_main.o ..\STACK\dump_functions.o ..\STACK\stack_functions.o SPU_functions.o ..\COMMON\common_functions.o ..\MC_Onegin\read_poem_from_file_functions.o ..\MC_Onegin\text_functions.o -o proc
 
 SPU_main.o: SPU_main.cpp
 	g++ $(FLAGS) -c SPU_main.cpp
 
-MC_Onegin\text_functions.o: MC_Onegin\text_functions.cpp
-	g++ $(FLAGS) -c MC_Onegin\text_functions.cpp
+..\MC_Onegin\text_functions.o: ..\MC_Onegin\text_functions.cpp
+	g++ $(FLAGS) -c ..\MC_Onegin\text_functions.cpp
 
-MC_Onegin/read_poem_from_file_functions.o: MC_Onegin/read_poem_from_file_functions.cpp
-	g++ $(FLAGS) -c MC_Onegin/read_poem_from_file_functions.cpp
+..\MC_Onegin\read_poem_from_file_functions.o: ..\MC_Onegin\read_poem_from_file_functions.cpp
+	g++ $(FLAGS) -c ..\MC_Onegin\read_poem_from_file_functions.cpp
 
-dump_functions.o: dump_functions.cpp
-	g++ $(FLAGS) -c dump_functions.cpp
+..\STACK\dump_functions.o: ..\STACK\dump_functions.cpp
+	g++ $(FLAGS) -c ..\STACK\dump_functions.cpp
 
-stack_functions.o: stack_functions.cpp
-	g++ $(FLAGS) -c stack_functions.cpp
+..\STACK\stack_functions.o: ..\STACK\stack_functions.cpp
+	g++ $(FLAGS) -c ..\STACK\stack_functions.cpp
 
 SPU_functions.o: SPU_functions.cpp
 	g++ $(FLAGS) -c SPU_functions.cpp
 
-common_functions.o: common_functions.cpp
-	g++ $(FLAGS) -c common_functions.cpp
+..\COMMON\common_functions.o: ..\COMMON\common_functions.cpp
+	g++ $(FLAGS) -c ..\COMMON\common_functions.cpp -o ..\COMMON\common_functions.o
 
 clean:
 	rm -rf *.o proc

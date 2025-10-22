@@ -1,8 +1,8 @@
-PUSH 50
+PUSH 100
 POPREG DX                       ;в DX храниться размер стороны квадрата
 PUSH -1
 POPREG AX
-PUSH 11
+PUSH 20
 POPREG GX                       ;РАДИУС КРУГА
 CALL :CountRadius               ;СЧИТАЕМ КООРДИНАТЫ ЦЕНТРА КРУГА
 
@@ -16,7 +16,21 @@ CALL :CountRadius               ;СЧИТАЕМ КООРДИНАТЫ ЦЕНТР�
     PUSH 1
     JNE :5
         CALL :GetDotCoord            ;РАССЧЕТ ПОЗИЦИИ КУДА НAДО ПОСТАВИТЬ ТОЧКУ
-        PUSH 46
+        PUSH 0
+        POPM [HX]
+
+        PUSH 1
+        PUSHREG HX
+        ADD
+        POPREG HX
+        PUSH 0
+        POPM [HX]
+
+        PUSH 1
+        PUSHREG HX
+        ADD
+        POPREG HX
+        PUSH 128
         POPM [HX]
     :5                               ;ЕСЛИ ТОЧКУ НЕ НАДО ПЕЧАТАТЬ
     CALL :SetNextDot                 ;ОБНОВЛЕНИЕ ЗНАЧЕНИЙ CX И BX
@@ -38,13 +52,9 @@ HLT                             ;КОНЕЦ
     SUB
     MUL
     PUSHREG CX
-    PUSH 2
-    MUL
     PUSHREG FX
     SUB
     PUSHREG CX
-    PUSH 2
-    MUL
     PUSHREG FX
     SUB
     MUL
@@ -77,6 +87,8 @@ HLT                             ;КОНЕЦ
     MUL
     PUSHREG BX
     ADD
+    PUSH 3
+    MUL
     POPREG HX
     RET
 

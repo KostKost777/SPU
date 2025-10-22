@@ -1,7 +1,7 @@
 #ifndef SPU_FUNCS
 #define SPU_FUNCS
 
-const int RAM_SIDE_LEN = 50;
+const int RAM_SIZE = 30000;
 
 struct SPU
 {
@@ -12,6 +12,7 @@ struct SPU
     struct Buffer buffer;
     int regs[NUMBER_OF_REGS];
     int err_code;
+    bool open_window;
 };
 
 enum SPUErr

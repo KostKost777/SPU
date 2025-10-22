@@ -1,12 +1,12 @@
 #include<TXLib.h>
 
-#include "dump_functions.h"
-#include "stack_functions.h"
-#include "common_functions.h"
+#include "..\STACK\dump_functions.h"
+#include "..\STACK\stack_functions.h"
+#include "..\COMMON\common_functions.h"
 #include "disassembler_funcs.h"
 
-#include "MC_Onegin\read_poem_from_file_functions.h"
-#include "MC_Onegin\text_functions.h"
+#include "..\MC_Onegin\read_poem_from_file_functions.h"
+#include "..\MC_Onegin\text_functions.h"
 
 FILE* out_file = fopen("disass_out.txt", "w");
 

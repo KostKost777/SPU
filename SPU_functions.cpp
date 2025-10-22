@@ -1,12 +1,12 @@
 #include <TXLib.h>
 #include <windows.h>
 
-#include "common_functions.h"
-#include "dump_functions.h"
-#include "stack_functions.h"
+#include "..\COMMON\common_functions.h"
+#include "..\STACK\dump_functions.h"
+#include "..\STACK\stack_functions.h"
 #include "SPU_functions.h"
 
-#include "MC_Onegin\read_poem_from_file_functions.h"
+#include "..\MC_Onegin\read_poem_from_file_functions.h"
 
 
 int SPUCtor(SPU* spu)
@@ -18,22 +18,16 @@ int SPUCtor(SPU* spu)
     StackCtor(&spu->stk, STACK_CAPACITY);
     StackCtor(&spu->ret_stk, STACK_CAPACITY);
 
-    spu->RAM = (int* )calloc(RAM_SIDE_LEN * RAM_SIDE_LEN,sizeof(int));
+    spu->open_window = false;
+
+    spu->RAM = (int* )calloc(RAM_SIZE,sizeof(int));
 
     assert(spu->RAM != NULL);
-
-    SetDefaultRAMValue(spu->RAM, '#');
 
     spu->pc = 0;
     spu->buffer.size = 0;
 
     return 0;
-}
-
-void SetDefaultRAMValue(int* RAM, char value)
-{
-    for (int i = 0; i < RAM_SIDE_LEN * RAM_SIDE_LEN; ++i)
-        RAM[i] = value;
 }
 
 int SPUVerifier(SPU* spu)
@@ -72,7 +66,7 @@ int SPUReadCmdFromFile(struct SPU* spu)
 {
     assert(spu != NULL);
 
-    FILE* bin_file = fopen("binfile.bin", "rb");
+    FILE* bin_file = fopen(bin_file_name, "rb");
 
     if (bin_file == NULL) {
         PRINT_LOGS("The bin file did not open");
@@ -114,23 +108,11 @@ int SPURunCmdFromBuffer(struct SPU* spu)
         getchar();
         #endif
 
-        bool check_correct_cmd = false;
+        int current_cmd = spu->buffer.code_arr[spu->pc];
 
-        for (int index = 0; index < NUM_OF_CMDS; ++index) {
+        //printf("CUR_CMD: %d   NAME: %s\n", current_cmd, all_cmd[current_cmd].name);
 
-            if (all_cmd[index].cmd == spu->buffer.code_arr[spu->pc]) {
-
-                if (all_cmd[index].cmd_function(spu, all_cmd[index].cmd)){
-                    //SPUdump(spu);
-                    break;
-                }
-
-                check_correct_cmd = true;
-                break;
-            }
-        }
-
-        if (check_correct_cmd == false) {
+        if (all_cmd[current_cmd].cmd_function(spu, all_cmd[current_cmd].cmd)) {
             PRINT_LOGS("Invalid command");
             return 1;
         }
@@ -254,6 +236,7 @@ int MemFuncs(struct SPU* spu, int cmd)
     {
         case cmdPOPM: StackPop(&spu->stk, &last_el);
                       spu->RAM[*registr_cell] = last_el;
+                      //printf("REG: %d  COLOR: %d\n", *registr_cell, last_el);
                       break;
 
         case cmdPUSHM: StackPush(&spu->stk, spu->RAM[*registr_cell]);
@@ -339,15 +322,24 @@ int Draw(struct SPU* spu, int cmd)
 
     (void)cmd;
 
-    system("cls");
+    const int SCALE = 10;
 
-    printf("RAM: \n");
-    for (int i = 0; i < RAM_SIDE_LEN * RAM_SIDE_LEN; ++i) {
+    const int COLOR_OFFSET = 3;
 
-        printf("%c", spu->RAM[i]);
+    if(!spu->open_window)
+        txCreateWindow(100 * SCALE, 100 * SCALE);
 
-        if ((i + 1) % RAM_SIDE_LEN == 0)
-            printf("\n");
+    txSetColor(TX_BLACK);
+
+    for (int i = 0; i < RAM_SIZE; i += COLOR_OFFSET) {
+
+        int X_coord = (i / COLOR_OFFSET) % 100 * SCALE;
+        int Y_coord = (i / COLOR_OFFSET) / 100 * SCALE;
+
+        txSetFillColor(RGB(spu->RAM[i], spu->RAM[i + 1], spu->RAM[i + 2]));
+
+        txRectangle(X_coord, Y_coord,
+                    X_coord + SCALE, Y_coord + SCALE);
     }
 
     return 0;

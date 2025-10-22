@@ -1,16 +1,19 @@
 #include <TXLib.h>
 
-#include "dump_functions.h"
-#include "stack_functions.h"
-#include "common_functions.h"
-#include "SPU_functions.h"
+#include "..\COMMON\common_functions.h"
+#include "..\STACK\dump_functions.h"
+#include "..\STACK\stack_functions.h"
+#include "..\SPU\SPU_functions.h"
 
-#include "MC_Onegin\read_poem_from_file_functions.h"
-#include "MC_Onegin\text_functions.h"
+#include "..\MC_Onegin\read_poem_from_file_functions.h"
+#include "..\MC_Onegin\text_functions.h"
 
-#include "assembler_functions.h"
+#include "..\ASM\assembler_functions.h"
 
-const char* log_file_name = "logfile.txt";
+const char* log_file_name = "../LOGS/logfile.txt";
+const char* txt_bin_file_name = "../COMMON/binfile.txt";
+const char* bin_file_name = "../COMMON/binfile.bin";
+
 FILE* log_file = fopen(log_file_name, "w");
 
 StructCmd all_cmd[NUM_OF_CMDS] =
@@ -39,7 +42,7 @@ StructCmd all_cmd[NUM_OF_CMDS] =
 {"PUSHM",    cmdPUSHM,     registr_arg,    MemFuncs,              GetHash("PUSHM")},
 {"POPM",     cmdPOPM,      registr_arg,    MemFuncs,              GetHash("POPM")}
 };
-
+int a;
 const char* reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
                                             "DX", "EX", "FX",
                                             "GX", "HX"};
@@ -56,7 +59,7 @@ int ReadCmdFromBinFile(struct Buffer* buffer)
         return 1;
     }
 
-    FILE* bin_file = fopen("binfile.bin", "rb");
+    FILE* bin_file = fopen(bin_file_name, "rb");
 
     if (bin_file == NULL) {
         PRINT_LOGS("The bin file did not open");
@@ -97,10 +100,22 @@ void BufferDtor(struct Buffer* buffer)
     buffer->size = 0;
 }
 
+size_t GetHash(const char* cmd_name)
+{
+    size_t hash = 5381;
+    int sym = 0;
+
+    while ((sym = *cmd_name++)) {
+        hash = (((hash << 5) + hash) + sym);
+    }
+
+    return hash;
+}
+
 void CloseLogFile()
 {
     fclose(log_file);
-    printf("Close\n");
+    printf("Logfile close\n");
 }
 
 

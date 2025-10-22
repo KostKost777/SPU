@@ -8,33 +8,36 @@ const int SIGNATURE = 1380077378; //BOBR
 const int HEADER_OFFSET = 2;
 
 extern FILE* log_file;
+
 extern const char* log_file_name;
+extern const char* txt_bin_file_name;
+extern const char* bin_file_name;
 
 enum CmdCodes
 {
-    cmdHLT = 0,
-    cmdPUSH = 1,
-    cmdADD = 2,
-    cmdSUB = 3,
-    cmdDIV = 4,
-    cmdOUT = 5,
-    cmdMUL = 6,
+    cmdHLT = 5,
+    cmdPUSH = 18,
+    cmdADD = 0,
+    cmdSUB = 1,
+    cmdDIV = 2,
+    cmdOUT = 6,
+    cmdMUL = 3,
     cmdSQVRT = 7,
-    cmdJMP = 8,
-    cmdJB = 9,
-    cmdJBE = 10,
-    cmdJA = 11,
-    cmdJAE = 12,
-    cmdJE = 13,
-    cmdJNE = 14,
-    cmdIN = 15,
-    cmdCALL = 16,
-    cmdRET = 17,
-    cmdPUSHM = 18,
-    cmdPOPM = 19,
-    cmdDRAW = 20,
-    cmdPUSHREG = 33,
-    cmdPOPREG = 52
+    cmdJMP = 10,
+    cmdJB = 11,
+    cmdJBE = 12,
+    cmdJA = 13,
+    cmdJAE = 14,
+    cmdJE = 15,
+    cmdJNE = 16,
+    cmdIN = 4,
+    cmdCALL = 17,
+    cmdRET = 8,
+    cmdPUSHM = 21,
+    cmdPOPM = 22,
+    cmdDRAW = 9,
+    cmdPUSHREG = 19,
+    cmdPOPREG = 20
 };
 
 enum ArgType
@@ -61,6 +64,8 @@ const size_t NUMBER_OF_REGS = 8; //AX, BX, CX, DX, EX, FX, GX, HX
 
 const int BUFFER_CAPACITY = 1500;
 
+extern StructCmd all_cmd[NUM_OF_CMDS];
+
 struct Buffer
 {
     int* code_arr;
@@ -74,6 +79,8 @@ int BufferCtor(struct Buffer* buffer);
 int ReadCmdFromBinFile(struct Buffer* buffer);
 
 void CloseLogFile();
+
+size_t GetHash(const char* cmd_name);
 
 extern StructCmd all_cmd[NUM_OF_CMDS];
 
