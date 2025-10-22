@@ -22,9 +22,9 @@ int main(int argc, char* argv[])
 
     qsort(all_cmd, NUM_OF_CMDS, sizeof(StructCmd), StructCmdComparatorByHash);
 
-    for (int i = 0; i < NUM_OF_CMDS; ++i) {
-        printf("STR: %s HASH: %u\n", all_cmd[i].name, all_cmd[i].hash);
-    }
+    // for (int i = 0; i < NUM_OF_CMDS; ++i) {
+    //     printf("STR: %s HASH: %u\n", all_cmd[i].name, all_cmd[i].hash);
+    // }
 
     if (BufferCtor(&buffer)) {
         AsmEndProcessing(&buffer);
@@ -50,11 +50,10 @@ int main(int argc, char* argv[])
 
     qsort(all_cmd, NUM_OF_CMDS, sizeof(StructCmd), StructCmdComparatorByCmdEnum);
 
-    for (int i = 0; i < NUM_OF_CMDS; ++i) {
-        printf("STR: %s CMD: %d\n", all_cmd[i].name, all_cmd[i].cmd);
-    }
+    // for (int i = 0; i < NUM_OF_CMDS; ++i) {
+    //     printf("STR: %s CMD: %d\n", all_cmd[i].name, all_cmd[i].cmd);
+    // }
 
     printf("Asm OK\n");
 
-    return 0;
 }

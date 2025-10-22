@@ -8,7 +8,6 @@
 
 #include "..\MC_Onegin\read_poem_from_file_functions.h"
 
-
 int SPUCtor(SPU* spu)
 {
     assert(spu != NULL);

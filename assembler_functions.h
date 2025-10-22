@@ -6,6 +6,7 @@ const size_t LABELS_ARR_CAPACITY = 100;
 struct StructLabel
 {
     size_t label_hash;
+    char* label_name;
     int label_pc;
 };
 
@@ -55,7 +56,8 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
                       const char* line, char cmdStr[],
                       struct StructLabelsArr*, int* pc);
 
-void SetDefaultLabels(struct StructLabel arr[]);
+struct StructLabel* FindLabelByHash(struct StructLabelsArr* labels,
+                                    size_t cur_hash);
 
 int StructCmdComparatorByHash(const void* param1, const void* param2);
 
