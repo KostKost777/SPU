@@ -35,7 +35,7 @@ int SPUCtor(struct SPU* spu);
 
 int SPUVerifier(struct SPU* spu);
 
-void SetDefaultRAMValue(int* RAM, char value);
+void SetDefaultColorRAM(int* RAM, const int R, const int G, const int B);
 
 int SPUReadCmdFromFile(struct SPU* spu);
 

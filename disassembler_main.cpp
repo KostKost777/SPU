@@ -1,9 +1,9 @@
 #include<TXLib.h>
 
 #include "disassembler_funcs.h"
-#include "..\STACK\dump_functions.h"
-#include "..\STACK\stack_functions.h"
-#include "..\COMMON\common_functions.h"
+#include "STACK\dump_functions.h"
+#include "STACK\stack_functions.h"
+#include "COMMON\common_functions.h"
 
 int main()
 {

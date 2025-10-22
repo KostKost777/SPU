@@ -1,12 +1,12 @@
 #include <TXLib.h>
 #include <windows.h>
 
-#include "..\COMMON\common_functions.h"
-#include "..\STACK\dump_functions.h"
-#include "..\STACK\stack_functions.h"
+#include "COMMON\common_functions.h"
+#include "STACK\dump_functions.h"
+#include "STACK\stack_functions.h"
 #include "SPU_functions.h"
 
-#include "..\MC_Onegin\read_poem_from_file_functions.h"
+#include "MC_Onegin\read_poem_from_file_functions.h"
 
 int SPUCtor(SPU* spu)
 {
@@ -19,14 +19,32 @@ int SPUCtor(SPU* spu)
 
     spu->open_window = false;
 
-    spu->RAM = (int* )calloc(RAM_SIZE,sizeof(int));
+    spu->RAM = (int* )calloc(RAM_SIZE, sizeof(int));
 
     assert(spu->RAM != NULL);
+
+    SetDefaultColorRAM(spu->RAM, 255, 255 , 255);
 
     spu->pc = 0;
     spu->buffer.size = 0;
 
     return 0;
+}
+
+// uint8_t
+
+void SetDefaultColorRAM(int* RAM, const int R, const int G, const int B)
+{
+    assert(RAM != NULL);
+
+    for (int i = 0; i < RAM_SIZE; i += 3) {
+
+        RAM[i] = R;
+        RAM[i + 1] = G;
+        RAM[i + 2] = B;
+
+    }
+
 }
 
 int SPUVerifier(SPU* spu)
@@ -328,7 +346,7 @@ int Draw(struct SPU* spu, int cmd)
     if(!spu->open_window)
         txCreateWindow(100 * SCALE, 100 * SCALE);
 
-    txSetColor(TX_BLACK);
+    txSetColor(TX_WHITE);
 
     for (int i = 0; i < RAM_SIZE; i += COLOR_OFFSET) {
 

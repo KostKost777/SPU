@@ -1,16 +1,47 @@
 #include <TXLIB.h>
 
-#include "..\COMMON\common_functions.h"
-#include "..\STACK\dump_functions.h"
+#include "COMMON\common_functions.h"
+#include "STACK\dump_functions.h"
 
-#include "..\MC_Onegin\read_poem_from_file_functions.h"
-#include "..\MC_Onegin\text_functions.h"
+#include "MC_Onegin\read_poem_from_file_functions.h"
+#include "MC_Onegin\text_functions.h"
 
 #include "assembler_functions.h"
 
-const char* source_file_name;
+const char* source_file_name = "";
 
-FILE* lst_file = fopen("listing.lst", "w");
+const char* lst_file_name = "listing.lst";
+FILE* lst_file = fopen(lst_file_name, "w");
+
+static int IsLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc);
+
+static int EmitInArr(struct Buffer* buffer, int value);
+
+static int InsertPushFuncInBuffer(const char* str_with_arg,
+                                  struct CurrentStateAsm cur_state_asm);
+
+static int InsertJumpFuncInBuffer(const char* str_with_arg,
+                                  struct CurrentStateAsm cur_state_asm,
+                                  struct StructLabelsArr* labels);
+
+static int InsertRegFuncInBuffer(const char* str_with_arg,
+                          struct CurrentStateAsm cur_state_asm);
+
+static int InsertNoArgFuncInBuffer(struct CurrentStateAsm cur_state_asm);
+
+static int GetRegIndex(const char* str_with_reg);
+
+static int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
+                         struct StructLabelsArr* labels);
+
+static bool ProcessingAsmCmd(struct Buffer* buffer,
+                             const char* line, char cmdStr[],
+                             struct StructLabelsArr* labels, int* pc);
+
+static struct StructLabel* FindLabelByHash(struct StructLabelsArr* labels,
+                                           size_t cur_hash);
+
+static int BinSearchComparatorForCmd(const void* param1, const void* param2);
 
 int AsmPrintLogs(const char* message, size_t line)
 {
@@ -83,8 +114,6 @@ void AsmEndProcessing(struct Buffer* buffer)
     fclose(lst_file);
 }
 
-//ATEXIT
-
 int AsmReadCmdFromFile(struct Buffer* buffer)
 {
     assert(buffer != NULL);
@@ -98,8 +127,6 @@ int AsmReadCmdFromFile(struct Buffer* buffer)
     buffer->code_arr[1] = VERSION;
 
     struct StructLabelsArr labels = {};
-
-    labels.size = 0;
 
     for (int compile_iterator = 1; compile_iterator <= 2; ++compile_iterator) {
         if (FillAsmBuffer(buffer, Asmtext, &labels) == 1)
@@ -125,12 +152,12 @@ int EmitInArr(struct Buffer* buffer, int value)
     return 0;
 }
 
-int InsertRegFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                          int* pc, StructCmd cmd_struct)
+int InsertRegFuncInBuffer(const char* str_with_arg,
+                          struct CurrentStateAsm cur_state_asm)
 {
-    assert(buffer != NULL);
+    assert(cur_state_asm.buffer != NULL);
     assert(str_with_arg != NULL);
-    assert(pc != NULL);
+    assert(cur_state_asm.pc != NULL);
 
     int registr = GetRegIndex(str_with_arg);
 
@@ -138,14 +165,14 @@ int InsertRegFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
 
     if (registr == -1) return 0;
 
-    EmitInArr(buffer, cmd_struct.cmd);
-    EmitInArr(buffer, registr);
-
-    *pc+=2;
+    EmitInArr(cur_state_asm.buffer, cur_state_asm.cmd_struct.cmd);
+    EmitInArr(cur_state_asm.buffer, registr);
 
     fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %cX\n",
-                       *pc, cmd_struct.cmd, registr,
-                       cmd_struct.name, registr + 'A');
+                       *cur_state_asm.pc, cur_state_asm.cmd_struct.cmd,
+                       registr, cur_state_asm.cmd_struct.name, registr + 'A');
+
+    *cur_state_asm.pc += 2;
 
     return 1;
 }
@@ -168,7 +195,7 @@ int GetRegIndex(const char* str_with_reg)
 //
 //     printf("STATUS: %d %d\n", status1, status2);
 
-    if (status1 == 0 && status2 == 0)
+    if (status1 != 1 && status2 != 1)
         return -1;
 
     for (size_t i = 0; i < NUMBER_OF_REGS; ++i) {
@@ -180,19 +207,16 @@ int GetRegIndex(const char* str_with_reg)
     return -1;
 }
 
-int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, struct StructLabelsArr* labels,
-                           StructCmd cmd_struct)
+int InsertJumpFuncInBuffer(const char* str_with_arg,
+                           struct CurrentStateAsm cur_state_asm,
+                           struct StructLabelsArr* labels)
 {
-    assert(buffer != NULL);
+    assert(cur_state_asm.buffer != NULL);
     assert(str_with_arg != NULL);
     assert(labels != NULL);
-    assert(pc != NULL);
-
-    EmitInArr(buffer, cmd_struct.cmd);
+    assert(cur_state_asm.pc != NULL);
 
     const int MAX_LABEL_LEN = 100;
-
     char str_label[MAX_LABEL_LEN]= "";
 
     if (sscanf(str_with_arg, "%*s :%s", str_label) != 1)
@@ -226,52 +250,54 @@ int InsertJumpFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
 
     }
 
-    EmitInArr(buffer, label_pc_to_insert);
+    EmitInArr(cur_state_asm.buffer, cur_state_asm.cmd_struct.cmd);
+    EmitInArr(cur_state_asm.buffer, label_pc_to_insert);
 
-    *pc+=2;
+    *cur_state_asm.pc += 2;
 
     fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s %s\n",
-                        *pc, cmd_struct.cmd, label_pc_to_insert,
-                        cmd_struct.name, str_label);
+                        *cur_state_asm.pc, cur_state_asm.cmd_struct.cmd,
+                        label_pc_to_insert, cur_state_asm.cmd_struct.name,
+                        str_label);
     return 1;
 }
 
-int InsertPushFuncInBuffer(const char* str_with_arg, struct Buffer* buffer,
-                           int* pc, StructCmd cmd_struct)
+int InsertPushFuncInBuffer(const char* str_with_arg,
+                           struct CurrentStateAsm cur_state_asm)
 {
-    assert(buffer != NULL);
+    assert(cur_state_asm.buffer != NULL);
     assert(str_with_arg != NULL);
-    assert(pc != NULL);
+    assert(cur_state_asm.pc != NULL);
 
     int arg = 0;
 
-    if (sscanf(str_with_arg, "%*s %d", &arg) == 0)
+    if (sscanf(str_with_arg, "%*s %d", &arg) != 1)
         return 0;
 
     fprintf(lst_file, "[%3d]   |  %3d %3d  |  %s\n",
-                       *pc, cmd_struct.cmd,
-                       arg, cmd_struct.name);
+                       *cur_state_asm.pc, cur_state_asm.cmd_struct.cmd,
+                       arg, cur_state_asm.cmd_struct.name);
 
-    EmitInArr(buffer, cmd_struct.cmd);
-    EmitInArr(buffer, arg);
+    EmitInArr(cur_state_asm.buffer, cur_state_asm.cmd_struct.cmd);
+    EmitInArr(cur_state_asm.buffer, arg);
 
-    *pc+=2;
+    *cur_state_asm.pc += 2;
 
     return 1;
 }
 
-int InsertNoArgFuncInBuffer(struct Buffer* buffer,
-                            int* pc, StructCmd cmd_struct)
+int InsertNoArgFuncInBuffer(struct CurrentStateAsm cur_state_asm)
 {
-    assert(buffer != NULL);
-    assert(pc != NULL);
+    assert(cur_state_asm.buffer != NULL);
+    assert(cur_state_asm.pc != NULL);
 
-    EmitInArr(buffer, cmd_struct.cmd);
+    EmitInArr(cur_state_asm.buffer, cur_state_asm.cmd_struct.cmd);
 
     fprintf(lst_file, "[%3d]   |  %3d      |  %s\n",
-                       *pc, cmd_struct.cmd, cmd_struct.name);
+                       *cur_state_asm.pc, cur_state_asm.cmd_struct.cmd,
+                       cur_state_asm.cmd_struct.name);
 
-    *pc+=1;
+    *cur_state_asm.pc += 1;
 
     return 1;
 }
@@ -302,7 +328,7 @@ int FillAsmBuffer(struct Buffer* buffer, Struct_Poem Asmtext,
          //printf("NOW FUNC: (%s)\n", cmdStr);
         // printf("STATUS: %d\n\n", status);
 
-        if (DetectLabel(cmdStr, labels, pc)) {
+        if (IsLabel(cmdStr, labels, pc)) {
             //printf("LINE: %d\n", source_line_count);
             source_line_count++;
             continue;
@@ -353,35 +379,36 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
                                                  NUM_OF_CMDS, sizeof(StructCmd),
                                                  BinSearchComparatorForCmd);
 
-    if (current_cmd == NULL) {
+    if (current_cmd == NULL || strcmp(current_cmd->name, cmdStr)) {
         check_correct_cmd = false;
         return check_correct_cmd;
     }
+
+    //сделать обертку
+
+    struct CurrentStateAsm cur_state_asm = {buffer, pc, *current_cmd};
 
     switch(current_cmd->arg)
     {
         case no_arg:
 
-            check_correct_cmd = InsertNoArgFuncInBuffer(buffer, pc,
-                                                        *current_cmd);
+            check_correct_cmd = InsertNoArgFuncInBuffer(cur_state_asm);
             break;
 
         case registr_arg:
 
-            check_correct_cmd = InsertRegFuncInBuffer(line, buffer,
-                                                      pc, *current_cmd);
+            check_correct_cmd = InsertRegFuncInBuffer(line, cur_state_asm);
             break;
 
         case numeric_arg:
 
-            check_correct_cmd = InsertPushFuncInBuffer(line, buffer,
-                                                       pc, *current_cmd);
+            check_correct_cmd = InsertPushFuncInBuffer(line, cur_state_asm);
             break;
 
         case jmp_arg:
 
-            check_correct_cmd = InsertJumpFuncInBuffer(line, buffer,
-                                                       pc, labels, *current_cmd);
+            check_correct_cmd = InsertJumpFuncInBuffer(line, cur_state_asm,
+                                                       labels);
             break;
 
         default:
@@ -393,7 +420,7 @@ bool ProcessingAsmCmd(struct Buffer* buffer,
     return check_correct_cmd;
 }
 
-int DetectLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc)
+int IsLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc)
 {
     assert(cmdStr != NULL);
     assert(labels != NULL);
@@ -402,15 +429,14 @@ int DetectLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc)
         return 0;
 
     const int MAX_LABEL_LEN = 100;
-
     char str_label[MAX_LABEL_LEN] = "";
 
     int status = sscanf(cmdStr, ":%s", str_label);
 
-    size_t str_label_hash = GetHash(str_label);
-
     if (status != 1)
         return 0;
+
+    size_t str_label_hash = GetHash(str_label);
 
     struct StructLabel* current_label = FindLabelByHash(labels, str_label_hash);
 
@@ -432,17 +458,6 @@ int DetectLabel(const char* cmdStr, struct StructLabelsArr* labels, int pc)
     //printf("LABEL_NEW_v_metke: |%s|  HASH:  %u\n", str_label, str_label_hash);
 
     return 1;
-}
-
-int StructCmdComparatorByCmdEnum(const void* param1, const void* param2)
-{
-    assert(param1 != NULL);
-    assert(param2 != NULL);
-
-    const StructCmd* cmd1 = (const StructCmd*)param1;
-    const StructCmd* cmd2 = (const StructCmd*)param2;
-
-    return cmd1->cmd - cmd2->cmd;
 }
 
 int StructCmdComparatorByHash(const void* param1, const void* param2)
@@ -475,51 +490,16 @@ int BinSearchComparatorForCmd(const void* param1, const void* param2)
     return 1;
 }
 
-int BinSearchComparatorForLabel(const void* param1, const void* param2)
-{
-    assert(param1 != NULL);
-    assert(param2 != NULL);
-
-    const size_t* value = (const size_t* )param1;
-    const StructLabel* label_2 = (const StructLabel*)param2;
-
-    if (*value < label_2->label_hash) return -1;
-
-    else if (*value == label_2->label_hash) return 0;
-
-    return 1;
-}
-
-int StructLabelComparator(const void* param1, const void* param2)
-{
-    assert(param1 != NULL);
-    assert(param2 != NULL);
-
-    const StructLabel* label_1 = (const StructLabel*)param1;
-    const StructLabel* label_2 = (const StructLabel*)param2;
-
-    if (label_1->label_hash < label_2->label_hash) return -1;
-
-    else if (label_1->label_hash == label_2->label_hash) return 0;
-
-    return 1;
-}
 
 struct StructLabel* FindLabelByHash(struct StructLabelsArr* labels,
                                     size_t cur_hash)
 {
     assert(labels != NULL);
 
-    qsort(labels->arr, labels->size,
-          sizeof(StructLabel), StructLabelComparator);
+    for (size_t i = 0;i < labels->size; ++i) {
+        if (cur_hash == labels->arr[i].label_hash)
+            return &labels->arr[i];
+    }
 
-    // for (size_t i = 0; i < labels->size; ++i) {
-    //     printf("LABEL_NAME: %s ---- PC: %d\n", labels->arr[i].label_name,
-    //                                            labels->arr[i].label_pc);
-    // }
-
-    return (StructLabel*)bsearch(&cur_hash, labels->arr,
-                                 labels->size,
-                                 sizeof(StructLabel),
-                                 BinSearchComparatorForLabel);
+    return NULL;
 }

@@ -1,8 +1,8 @@
 #include <TXLib.h>
 
-#include "..\COMMON\common_functions.h"
-#include "..\STACK\dump_functions.h"
-#include "..\STACK\stack_functions.h"
+#include "COMMON\common_functions.h"
+#include "STACK\dump_functions.h"
+#include "STACK\stack_functions.h"
 #include "SPU_functions.h"
 
 int main()

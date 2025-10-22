@@ -1,5 +1,7 @@
 #include <TXLib.h>
 
+// g++ -I (-include) STACK_HACK/
+
 #include "..\COMMON\common_functions.h"
 #include "..\STACK\dump_functions.h"
 #include "..\STACK\stack_functions.h"
@@ -42,8 +44,9 @@ StructCmd all_cmd[NUM_OF_CMDS] =
 {"PUSHM",    cmdPUSHM,     registr_arg,    MemFuncs,              GetHash("PUSHM")},
 {"POPM",     cmdPOPM,      registr_arg,    MemFuncs,              GetHash("POPM")}
 };
-int a;
-const char* reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
+
+
+const char* const reg_name_arr[NUMBER_OF_REGS] = {"AX", "BX", "CX",
                                             "DX", "EX", "FX",
                                             "GX", "HX"};
 
