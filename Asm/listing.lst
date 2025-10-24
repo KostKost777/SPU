@@ -1,0 +1,192 @@
+[  0]   |   18 100  |  PUSH
+[  2]   |   20   3  |  POPREG DX
+[  4]   |   18  -1  |  PUSH
+[  6]   |   20   0  |  POPREG AX
+[  8]   |   18  20  |  PUSH
+[ 10]   |   20   6  |  POPREG GX
+[ 14]   |   17  -1  |  CALL CountRadius
+[ 14]   |   19   0  |  PUSHREG AX
+[ 16]   |   18   1  |  PUSH
+[ 18]   |    0      |  ADD
+[ 19]   |   20   0  |  POPREG AX
+[ 23]   |   17  -1  |  CALL CheckDot
+[ 23]   |   18   1  |  PUSH
+[ 27]   |   16  -1  |  JNE 5
+[ 29]   |   17  -1  |  CALL GetDotCoord
+[ 29]   |   18 255  |  PUSH
+[ 31]   |   22   7  |  POPM HX
+[ 33]   |   18   1  |  PUSH
+[ 35]   |   19   7  |  PUSHREG HX
+[ 37]   |    0      |  ADD
+[ 38]   |   20   7  |  POPREG HX
+[ 40]   |   18 128  |  PUSH
+[ 42]   |   22   7  |  POPM HX
+[ 44]   |   18   1  |  PUSH
+[ 46]   |   19   7  |  PUSHREG HX
+[ 48]   |    0      |  ADD
+[ 49]   |   20   7  |  POPREG HX
+[ 51]   |   18 255  |  PUSH
+[ 53]   |   22   7  |  POPM HX
+[ 57]   |   17  -1  |  CALL SetNextDot
+[ 57]   |   19   0  |  PUSHREG AX
+[ 59]   |   19   3  |  PUSHREG DX
+[ 61]   |   19   3  |  PUSHREG DX
+[ 63]   |    3      |  MUL
+[ 66]   |   11  14  |  JB While_Ax_<_100
+[ 66]   |    9      |  DRAW
+[ 67]   |    5      |  HLT
+[ 68]   |   19   1  |  PUSHREG BX
+[ 70]   |   19   4  |  PUSHREG EX
+[ 72]   |    1      |  SUB
+[ 73]   |   19   1  |  PUSHREG BX
+[ 75]   |   19   4  |  PUSHREG EX
+[ 77]   |    1      |  SUB
+[ 78]   |    3      |  MUL
+[ 79]   |   19   2  |  PUSHREG CX
+[ 81]   |   19   5  |  PUSHREG FX
+[ 83]   |    1      |  SUB
+[ 84]   |   19   2  |  PUSHREG CX
+[ 86]   |   19   5  |  PUSHREG FX
+[ 88]   |    1      |  SUB
+[ 89]   |    3      |  MUL
+[ 90]   |    0      |  ADD
+[ 91]   |   19   6  |  PUSHREG GX
+[ 93]   |   19   6  |  PUSHREG GX
+[ 95]   |    3      |  MUL
+[ 98]   |   12  -1  |  JBE 4
+[ 98]   |   18   0  |  PUSH
+[100]   |    8      |  RET
+[101]   |   18   1  |  PUSH
+[103]   |    8      |  RET
+[104]   |   19   3  |  PUSHREG DX
+[106]   |   18   2  |  PUSH
+[108]   |    2      |  DIV
+[109]   |   20   4  |  POPREG EX
+[111]   |   19   3  |  PUSHREG DX
+[113]   |   18   2  |  PUSH
+[115]   |    2      |  DIV
+[116]   |   20   5  |  POPREG FX
+[118]   |    8      |  RET
+[119]   |   19   2  |  PUSHREG CX
+[121]   |   19   3  |  PUSHREG DX
+[123]   |    3      |  MUL
+[124]   |   19   1  |  PUSHREG BX
+[126]   |    0      |  ADD
+[127]   |   18   3  |  PUSH
+[129]   |    3      |  MUL
+[130]   |   20   7  |  POPREG HX
+[132]   |    8      |  RET
+[133]   |   19   1  |  PUSHREG BX
+[135]   |   18   1  |  PUSH
+[137]   |    0      |  ADD
+[138]   |   20   1  |  POPREG BX
+[142]   |   17  -1  |  CALL Check_BX
+[142]   |    8      |  RET
+[143]   |   19   1  |  PUSHREG BX
+[145]   |   19   3  |  PUSHREG DX
+[149]   |   15  -1  |  JE SetNew_BX_CX
+[149]   |    8      |  RET
+[150]   |   18   0  |  PUSH
+[152]   |   20   1  |  POPREG BX
+[154]   |   18   1  |  PUSH
+[156]   |   19   2  |  PUSHREG CX
+[158]   |    0      |  ADD
+[159]   |   20   2  |  POPREG CX
+[161]   |    8      |  RET
+
+[  0]   |   18 100  |  PUSH
+[  2]   |   20   3  |  POPREG DX
+[  4]   |   18  -1  |  PUSH
+[  6]   |   20   0  |  POPREG AX
+[  8]   |   18  20  |  PUSH
+[ 10]   |   20   6  |  POPREG GX
+[ 14]   |   17 104  |  CALL CountRadius
+[ 14]   |   19   0  |  PUSHREG AX
+[ 16]   |   18   1  |  PUSH
+[ 18]   |    0      |  ADD
+[ 19]   |   20   0  |  POPREG AX
+[ 23]   |   17  68  |  CALL CheckDot
+[ 23]   |   18   1  |  PUSH
+[ 27]   |   16  55  |  JNE 5
+[ 29]   |   17 119  |  CALL GetDotCoord
+[ 29]   |   18 255  |  PUSH
+[ 31]   |   22   7  |  POPM HX
+[ 33]   |   18   1  |  PUSH
+[ 35]   |   19   7  |  PUSHREG HX
+[ 37]   |    0      |  ADD
+[ 38]   |   20   7  |  POPREG HX
+[ 40]   |   18 128  |  PUSH
+[ 42]   |   22   7  |  POPM HX
+[ 44]   |   18   1  |  PUSH
+[ 46]   |   19   7  |  PUSHREG HX
+[ 48]   |    0      |  ADD
+[ 49]   |   20   7  |  POPREG HX
+[ 51]   |   18 255  |  PUSH
+[ 53]   |   22   7  |  POPM HX
+[ 57]   |   17 133  |  CALL SetNextDot
+[ 57]   |   19   0  |  PUSHREG AX
+[ 59]   |   19   3  |  PUSHREG DX
+[ 61]   |   19   3  |  PUSHREG DX
+[ 63]   |    3      |  MUL
+[ 66]   |   11  14  |  JB While_Ax_<_100
+[ 66]   |    9      |  DRAW
+[ 67]   |    5      |  HLT
+[ 68]   |   19   1  |  PUSHREG BX
+[ 70]   |   19   4  |  PUSHREG EX
+[ 72]   |    1      |  SUB
+[ 73]   |   19   1  |  PUSHREG BX
+[ 75]   |   19   4  |  PUSHREG EX
+[ 77]   |    1      |  SUB
+[ 78]   |    3      |  MUL
+[ 79]   |   19   2  |  PUSHREG CX
+[ 81]   |   19   5  |  PUSHREG FX
+[ 83]   |    1      |  SUB
+[ 84]   |   19   2  |  PUSHREG CX
+[ 86]   |   19   5  |  PUSHREG FX
+[ 88]   |    1      |  SUB
+[ 89]   |    3      |  MUL
+[ 90]   |    0      |  ADD
+[ 91]   |   19   6  |  PUSHREG GX
+[ 93]   |   19   6  |  PUSHREG GX
+[ 95]   |    3      |  MUL
+[ 98]   |   12 101  |  JBE 4
+[ 98]   |   18   0  |  PUSH
+[100]   |    8      |  RET
+[101]   |   18   1  |  PUSH
+[103]   |    8      |  RET
+[104]   |   19   3  |  PUSHREG DX
+[106]   |   18   2  |  PUSH
+[108]   |    2      |  DIV
+[109]   |   20   4  |  POPREG EX
+[111]   |   19   3  |  PUSHREG DX
+[113]   |   18   2  |  PUSH
+[115]   |    2      |  DIV
+[116]   |   20   5  |  POPREG FX
+[118]   |    8      |  RET
+[119]   |   19   2  |  PUSHREG CX
+[121]   |   19   3  |  PUSHREG DX
+[123]   |    3      |  MUL
+[124]   |   19   1  |  PUSHREG BX
+[126]   |    0      |  ADD
+[127]   |   18   3  |  PUSH
+[129]   |    3      |  MUL
+[130]   |   20   7  |  POPREG HX
+[132]   |    8      |  RET
+[133]   |   19   1  |  PUSHREG BX
+[135]   |   18   1  |  PUSH
+[137]   |    0      |  ADD
+[138]   |   20   1  |  POPREG BX
+[142]   |   17 143  |  CALL Check_BX
+[142]   |    8      |  RET
+[143]   |   19   1  |  PUSHREG BX
+[145]   |   19   3  |  PUSHREG DX
+[149]   |   15 150  |  JE SetNew_BX_CX
+[149]   |    8      |  RET
+[150]   |   18   0  |  PUSH
+[152]   |   20   1  |  POPREG BX
+[154]   |   18   1  |  PUSH
+[156]   |   19   2  |  PUSHREG CX
+[158]   |    0      |  ADD
+[159]   |   20   2  |  POPREG CX
+[161]   |    8      |  RET
+
