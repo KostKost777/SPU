@@ -1,10 +1,11 @@
 #include<TXLib.h>
 
-#include "STACK\stack_functions.h"
-#include "COMMON\common_functions.h"
-#include "STACK\dump_functions.h"
+#include "stack_functions.h"
+#include "common_functions.h"
+#include "dump_functions.h"
 
-#include "MC_Onegin\read_poem_from_file_functions.h"
+#include "read_poem_from_file_functions.h"
+#include "clean_memory_functions.h"
 
 #include "assembler_functions.h"
 
